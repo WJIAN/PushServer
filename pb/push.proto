@@ -1,0 +1,47 @@
+package pushproto;
+
+message Talk {
+	enum ProType {
+	     SYN = 1;
+	     SYNACK = 2;
+	     RESET = 3;
+	     REROUTE = 4;
+	     HEART = 5;
+	     ACK = 6;
+	     BUSSINESS = 7;
+
+
+	     ERR = 100;
+	     ECHO = 101;
+
+	}
+
+
+	required ProType Type = 1;       // 所有协议必须字段
+
+	// ECHO类型可携带以下任意组合字段
+
+	optional string Clientid = 2;    // SYNACK
+	optional fixed64 Msgid =  3;       // BUSSINESS
+	optional fixed64 Ackmsgid =  4;    // ACK
+
+	// syn ext
+	optional string Auth =  1001;       // SYN
+	optional string Appid =  1002;      // SYN
+	optional string Installid =  1003;  // SYN
+	optional string Clienttype =  1004; // SYN
+	optional string Clientver =  1005;  // SYN
+
+
+	// bussiness ext
+	// 这里的类型没有采用enum，是为了方便跨服务的数据传输
+	optional int32 Ziptype =  1500;  // BUSSINESS   0 没有压缩， 1 gzip， 2 7z
+	optional int32 Datatype =  1501; // BUSSINESS   1 protobuf 2 json 3 xml
+	optional bytes Bussdata =  1502;  // BUSSINESS
+
+	optional bytes Extdata =  2000;  // ERR
+
+
+}
+
+// protoc --go_out=. push.proto
