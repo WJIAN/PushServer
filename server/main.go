@@ -17,7 +17,7 @@ import (
 
 
 type config struct {
-	ServId int32
+	ServId uint32
 
 	HttpServ string
 	ConnServ string
@@ -26,7 +26,7 @@ type config struct {
 
 
 func main() {
-	cfg := config{ServId: 0, HttpServ: ":9091", ConnServ: ":9989"}
+	cfg := config{ServId: 0, HttpServ: ":9090", ConnServ: ":9988"}
 
 	js, _ := json.Marshal(&cfg)
 
@@ -34,12 +34,12 @@ func main() {
 
 	slog.Infof("%s", js)
 
-	conn_man := connection.NewConnectionManager()
+	conn_man := connection.NewConnectionManager(cfg.ServId)
 
-	httpport := ":9091"
+	httpport := cfg.HttpServ
 	connection.StartHttp(conn_man, httpport)
 
-	service := ":9989"
+	service := cfg.ConnServ
 	conn_man.Loop(service)
 
 }

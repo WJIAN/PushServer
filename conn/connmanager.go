@@ -120,9 +120,9 @@ func (self *ConnectionManager) Loop(addr string) {
 }
 
 
-func NewConnectionManager() *ConnectionManager {
-	v, err := gosnow.Default()
-	//v, err := gosnow.NewSnowFlake(100)
+func NewConnectionManager(servId uint32) *ConnectionManager {
+	//v, err := gosnow.Default()
+	v, err := gosnow.NewSnowFlake(servId)
 	if err != nil {
 		panic("snowflake init error, msgid can not get!")
 	}

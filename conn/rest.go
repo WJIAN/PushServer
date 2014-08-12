@@ -9,6 +9,9 @@ import (
 	"encoding/json"
 	"strconv"
 
+
+	"code.google.com/p/go-uuid/uuid"
+
 )
 
 
@@ -77,6 +80,29 @@ func writeRestErr(w http.ResponseWriter, err string) {
 
 }
 
+func route(w http.ResponseWriter, r *http.Request) {
+	//fun := "rest.route"
+
+	js, _ := json.Marshal(&map[string]string{"heart": "300", "ip": "42.120.4.112", "port":"9988"})
+	fmt.Fprintf(w, "%s", js)
+
+
+}
+
+
+func installid(w http.ResponseWriter, r *http.Request) {
+	//fun := "rest.installid"
+
+	uuidgen := uuid.NewUUID()
+	installid := uuidgen.String()
+
+
+	js, _ := json.Marshal(&map[string]string{"installid": installid})
+	fmt.Fprintf(w, "%s", js)
+
+}
+
+
 // Method: POST
 // Uri: /push/CLIENT_ID/ZIPTYPE/DATATYPE
 // Data: push data
@@ -139,6 +165,8 @@ func StartHttp(cm *ConnectionManager, httpport string) {
 	connman = cm
 	go func() {
 		http.HandleFunc("/push/", push)
+		http.HandleFunc("/route1", route)
+		http.HandleFunc("/installid1", installid)
 
 		err := http.ListenAndServe(httpport, nil) //设置监听的端口
 		if err != nil {
