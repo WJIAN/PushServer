@@ -9,21 +9,22 @@ import (
 
 	"encoding/json"
 	"os"
-	"io/ioutil"
+//	"io/ioutil"
 )
 
 import (
 	"PushServer/slog"
-	"PushServer/conn"
+	"PushServer/util"
+	"PushServer/router"
 )
 
-func statOut(manager *connection.ConnectionManager) {
+func statOut() {
 	ticker := time.NewTicker(time.Second * 10)
     go func() {
 		for {
 			select {
 			case <-ticker.C:
-				slog.Infof("Stat NumGo:%d NumCgo:%d NumConn:%d", runtime.NumGoroutine(), runtime.NumCgoCall(), manager.NumConn())
+				slog.Infof("Stat NumGo:%d NumCgo:%d", runtime.NumGoroutine(), runtime.NumCgoCall())
 			}
 		}
         //for t := range C {
@@ -44,20 +45,6 @@ type config struct {
 
 }
 
-func getConfig(cfgFile string) ([]byte, error){
-	fin, err := os.Open(cfgFile)
-
-	if err != nil {
-		return nil, err
-	}
-
-	defer fin.Close()
-
-	data, err := ioutil.ReadAll(fin)
-
-
-	return data, err
-}
 
 
 func main() {
@@ -66,7 +53,7 @@ func main() {
 		log.Panicln("Where config file?")
 	}
 	cfgFile := os.Args[1]
-	data, err := getConfig(cfgFile)
+	data, err := util.GetFile(cfgFile)
 	if err != nil {
 		log.Panicln(cfgFile, err)
 	}
@@ -99,13 +86,11 @@ func main() {
 
 
 	// service
-	conn_man := connection.NewConnectionManager(cfg.ServId, cfg.Secret)
 
-	connection.StartHttp(conn_man, cfg.HttpServ)
+	router.StartHttp(cfg.HttpServ)
 
-	statOut(conn_man)
+	statOut()
 
-	conn_man.Loop(cfg.ConnServ)
 
 }
 

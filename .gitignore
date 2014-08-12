@@ -1,4 +1,5 @@
 push_tst/push_tst
 server/server
-server/push.conf
-server/push.log
+push_server/push.conf
+push_server/push.log
+router_server/router_server

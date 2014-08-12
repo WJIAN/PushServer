@@ -1,6 +1,8 @@
 package util
 
 import (
+	"os"
+	"io/ioutil"
 	"encoding/binary"
 
 )
@@ -27,3 +29,17 @@ func Packdata(data []byte) []byte {
 
 
 
+func GetFile(cfgFile string) ([]byte, error){
+	fin, err := os.Open(cfgFile)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer fin.Close()
+
+	data, err := ioutil.ReadAll(fin)
+
+
+	return data, err
+}
