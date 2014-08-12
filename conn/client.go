@@ -22,8 +22,8 @@ import (
 
 // my lib
 import (
-	"push_server/pb"
-	"push_server/slog"
+	"PushServer/pb"
+	"PushServer/slog"
 
 )
 

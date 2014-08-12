@@ -11,6 +11,7 @@ import (
 	"encoding/binary"
     "net/http"
 	"io/ioutil"
+	"os"
 )
 
 // ext lib
@@ -21,8 +22,9 @@ import (
 
 // my lib
 import (
-	"push_server/pb"
-	"push_server/util"
+	"PushServer/pb"
+	"PushServer/util"
+	"PushServer/slog"
 
 )
 
@@ -134,7 +136,7 @@ func ReadOnce(conn net.Conn) ([]byte, error) {
 func tstErr(tstfun string, sb []byte, readtimes int, checkFun func(*pushproto.Talk) ) {
 	conn, err := connect()
 	if err != nil {
-		util.LogError("%s ERROR:create connection error:%s", tstfun, err)
+		slog.Errorf("%s ERROR:create connection error:%s", tstfun, err)
 		return
 	}
 
@@ -149,7 +151,7 @@ func tstErrConn(conn net.Conn, tstfun string, sb []byte, readtimes int, checkFun
 
 	ln, err := conn.Write(sb)
 	if ln != len(sb) || err != nil {
-		util.LogError("%s ERROR:send error:%s", tstfun, err)
+		slog.Errorf("%s ERROR:send error:%s", tstfun, err)
 		return
 	}
 
@@ -157,7 +159,7 @@ func tstErrConn(conn net.Conn, tstfun string, sb []byte, readtimes int, checkFun
 	for i := 0; i < readtimes; i++ {
 		data, err := ReadOnce(conn)
 		if err != nil {
-			util.LogError("%s ERROR:read connection error:%s", tstfun, err)
+			slog.Errorf("%s ERROR:read connection error:%s", tstfun, err)
 			return
 		}
 
@@ -166,11 +168,11 @@ func tstErrConn(conn net.Conn, tstfun string, sb []byte, readtimes int, checkFun
 		pb := &pushproto.Talk{}
 		err = proto.Unmarshal(data, pb)
 		if err != nil {
-			util.LogError("%s ERROR:unmarshaling connection error:%s", tstfun, err)
+			slog.Errorf("%s ERROR:unmarshaling connection error:%s", tstfun, err)
 			return
 		}
 
-		util.LogInfo("%s PROTO:%s", tstfun, pb)
+		slog.Infof("%s PROTO:%s", tstfun, pb)
 
 		checkFun(pb)
 
@@ -185,7 +187,7 @@ func tstErrConn(conn net.Conn, tstfun string, sb []byte, readtimes int, checkFun
 // pad错误
 func tstErrpad() {
 	tstfun := "tstErrpad"
-	util.LogInfo("<<<<<<%s TEST", tstfun)
+	slog.Infof("<<<<<<%s TEST", tstfun)
 
 	sb := util.PackdataPad([]byte("error pad"), 1)
 
@@ -193,9 +195,9 @@ func tstErrpad() {
 	tstErr(tstfun, sb, 1, func (pb *pushproto.Talk) {
 		pb_type := pb.GetType()
 		if pb_type == pushproto.Talk_ERR {
-			util.LogInfo(">>>>>>%s PASS: msg:%s", tstfun, pb.GetExtdata())
+			slog.Infof(">>>>>>%s PASS: msg:%s", tstfun, pb.GetExtdata())
 		} else {
-			util.LogError("%s ERROR", tstfun)
+			slog.Errorf("%s ERROR", tstfun)
 		}
 	})
 
@@ -207,15 +209,15 @@ func tstErrpad() {
 // 空数据包
 func tstErrEmptyPack() {
 	tstfun := "tstErrEmptyPack"
-	util.LogInfo("<<<<<<%s TEST", tstfun)
+	slog.Infof("<<<<<<%s TEST", tstfun)
 	sb := util.Packdata([]byte(""))
 
 	tstErr(tstfun, sb, 1, func (pb *pushproto.Talk) {
 		pb_type := pb.GetType()
 		if pb_type == pushproto.Talk_ERR {
-			util.LogInfo(">>>>>>%s PASS: msg:%s", tstfun, pb.GetExtdata())
+			slog.Infof(">>>>>>%s PASS: msg:%s", tstfun, pb.GetExtdata())
 		} else {
-			util.LogError("%s ERROR", tstfun)
+			slog.Errorf("%s ERROR", tstfun)
 		}
 
 	})
@@ -227,15 +229,15 @@ func tstErrEmptyPack() {
 // 长度为1数据包
 func tstErrOneSizePack() {
 	tstfun := "tstErrOneSizePack"
-	util.LogInfo("<<<<<<%s TEST", tstfun)
+	slog.Infof("<<<<<<%s TEST", tstfun)
 	sb := util.Packdata([]byte("1"))
 
 	tstErr(tstfun, sb, 1, func (pb *pushproto.Talk) {
 		pb_type := pb.GetType()
 		if pb_type == pushproto.Talk_ERR {
-			util.LogInfo(">>>>>>%s PASS: msg:%s", tstfun, pb.GetExtdata())
+			slog.Infof(">>>>>>%s PASS: msg:%s", tstfun, pb.GetExtdata())
 		} else {
-			util.LogError("%s ERROR", tstfun)
+			slog.Errorf("%s ERROR", tstfun)
 		}
 
 	})
@@ -250,7 +252,7 @@ func tstErrOneSizePack() {
 // 连接建立，clientid获取
 func tstSyn() {
 	tstfun := "tstSyn"
-	util.LogInfo("<<<<<<%s TEST", tstfun)
+	slog.Infof("<<<<<<%s TEST", tstfun)
 	syn := &pushproto.Talk{
 		Type: pushproto.Talk_SYN.Enum(),
 		Appid: proto.String("shawn"),
@@ -264,7 +266,7 @@ func tstSyn() {
 
 	data, err := proto.Marshal(syn)
 	if err != nil {
-		util.LogError("%s ERROR:syn proto marshal error:%s", tstfun, err)
+		slog.Errorf("%s ERROR:syn proto marshal error:%s", tstfun, err)
 		return
 	}
 
@@ -272,9 +274,9 @@ func tstSyn() {
 	tstErr(tstfun, sb, 1, func (pb *pushproto.Talk) {
 		pb_type := pb.GetType()
 		if pb_type == pushproto.Talk_SYNACK {
-			util.LogInfo(">>>>>>%s PASS: client_id:%s", tstfun, pb.GetClientid())
+			slog.Infof(">>>>>>%s PASS: client_id:%s", tstfun, pb.GetClientid())
 		} else {
-			util.LogError("%s ERROR", tstfun)
+			slog.Errorf("%s ERROR", tstfun)
 		}
 
 	})
@@ -285,7 +287,7 @@ func tstSyn() {
 // 多个连接使用同样的clientid，老的被剔除
 func tstDupClient() {
 	tstfun := "tstDupClient"
-	util.LogInfo("<<<<<<%s TEST", tstfun)
+	slog.Infof("<<<<<<%s TEST", tstfun)
 
 	syn := &pushproto.Talk{
 		Type: pushproto.Talk_SYN.Enum(),
@@ -300,7 +302,7 @@ func tstDupClient() {
 
 	data, err := proto.Marshal(syn)
 	if err != nil {
-		util.LogError("%s ERROR:syn proto marshal error:%s", tstfun, err)
+		slog.Errorf("%s ERROR:syn proto marshal error:%s", tstfun, err)
 		return
 	}
 
@@ -311,17 +313,17 @@ func tstDupClient() {
 		pb_type := pb.GetType()
 		if first_conn_read == 0 {
 			if pb_type == pushproto.Talk_SYNACK {
-				util.LogInfo("%s First Conn: client_id:%s", tstfun, pb.GetClientid())
+				slog.Infof("%s First Conn: client_id:%s", tstfun, pb.GetClientid())
 			} else {
-				util.LogError("%s First Conn ERROR", tstfun)
+				slog.Errorf("%s First Conn ERROR", tstfun)
 				return
 			}
 			first_conn_read += 1
 		} else {
 			if pb_type == pushproto.Talk_ERR {
-				util.LogInfo(">>>>>>%s First Conn PASS: msg:%s", tstfun, pb.GetExtdata())
+				slog.Infof(">>>>>>%s First Conn PASS: msg:%s", tstfun, pb.GetExtdata())
 			} else {
-				util.LogError("%s First Conn ERROR", tstfun)
+				slog.Errorf("%s First Conn ERROR", tstfun)
 				return
 			}
 
@@ -335,9 +337,9 @@ func tstDupClient() {
 	tstErr(tstfun, sb, 1, func (pb *pushproto.Talk) {
 		pb_type := pb.GetType()
 		if pb_type == pushproto.Talk_SYNACK {
-			util.LogInfo(">>>>>>%s Second Conn PASS: client_id:%s", tstfun, pb.GetClientid())
+			slog.Infof(">>>>>>%s Second Conn PASS: client_id:%s", tstfun, pb.GetClientid())
 		} else {
-			util.LogError("%s Second Conn ERROR", tstfun)
+			slog.Errorf("%s Second Conn ERROR", tstfun)
 		}
 
 	})
@@ -349,7 +351,7 @@ func tstDupClient() {
 // Echo 测试
 func tstEcho() {
 	tstfun := "tstEcho"
-	util.LogInfo("<<<<<<%s TEST", tstfun)
+	slog.Infof("<<<<<<%s TEST", tstfun)
 	syn := &pushproto.Talk{
 		Type: pushproto.Talk_ECHO.Enum(),
 		Extdata: []byte("JUST ECHO"),
@@ -359,7 +361,7 @@ func tstEcho() {
 
 	data, err := proto.Marshal(syn)
 	if err != nil {
-		util.LogError("%s ERROR:proto marshal error:%s", tstfun, err)
+		slog.Errorf("%s ERROR:proto marshal error:%s", tstfun, err)
 		return
 	}
 
@@ -367,9 +369,9 @@ func tstEcho() {
 	tstErr(tstfun, sb, 1, func (pb *pushproto.Talk) {
 		pb_type := pb.GetType()
 		if pb_type == pushproto.Talk_ECHO {
-			util.LogInfo(">>>>>>%s PASS: %s", tstfun, string(pb.GetExtdata()))
+			slog.Infof(">>>>>>%s PASS: %s", tstfun, string(pb.GetExtdata()))
 		} else {
-			util.LogError("%s ERROR", tstfun)
+			slog.Errorf("%s ERROR", tstfun)
 		}
 
 	})
@@ -381,7 +383,7 @@ func tstEcho() {
 // Heart 测试
 func tstHeart() {
 	tstfun := "tstHeart"
-	util.LogInfo("<<<<<<%s TEST", tstfun)
+	slog.Infof("<<<<<<%s TEST", tstfun)
 	syn := &pushproto.Talk {
 		Type: pushproto.Talk_HEART.Enum(),
 
@@ -390,7 +392,7 @@ func tstHeart() {
 
 	data, err := proto.Marshal(syn)
 	if err != nil {
-		util.LogError("%s ERROR:proto marshal error:%s", tstfun, err)
+		slog.Errorf("%s ERROR:proto marshal error:%s", tstfun, err)
 		return
 	}
 
@@ -398,9 +400,9 @@ func tstHeart() {
 	tstErr(tstfun, sb, 1, func (pb *pushproto.Talk) {
 		pb_type := pb.GetType()
 		if pb_type == pushproto.Talk_HEART {
-			util.LogInfo(">>>>>>%s PASS", tstfun)
+			slog.Infof(">>>>>>%s PASS", tstfun)
 		} else {
-			util.LogError("%s ERROR", tstfun)
+			slog.Errorf("%s ERROR", tstfun)
 		}
 
 	})
@@ -412,7 +414,7 @@ func tstHeart() {
 // 业务数据包发送
 func tstBussinessSend(ackDelay int) {
 	tstfun := "tstBussinessSend"
-	util.LogInfo("<<<<<<%s TEST", tstfun)
+	slog.Infof("<<<<<<%s TEST", tstfun)
 
 	syn := &pushproto.Talk{
 		Type: pushproto.Talk_SYN.Enum(),
@@ -427,7 +429,7 @@ func tstBussinessSend(ackDelay int) {
 
 	data, err := proto.Marshal(syn)
 	if err != nil {
-		util.LogError("%s ERROR:syn proto marshal error:%s", tstfun, err)
+		slog.Errorf("%s ERROR:syn proto marshal error:%s", tstfun, err)
 		return
 	}
 
@@ -438,7 +440,7 @@ func tstBussinessSend(ackDelay int) {
 
 	conn, err := connect()
 	if err != nil {
-		util.LogError("%s ERROR:create connection error:%s", tstfun, err)
+		slog.Errorf("%s ERROR:create connection error:%s", tstfun, err)
 		return
 	}
 
@@ -450,16 +452,16 @@ func tstBussinessSend(ackDelay int) {
 		if first_conn_read == 0 {
 			if pb_type == pushproto.Talk_SYNACK {
 				clientid = pb.GetClientid()
-				util.LogInfo("%s Conn: client_id:%s", tstfun, pb.GetClientid())
+				slog.Infof("%s Conn: client_id:%s", tstfun, pb.GetClientid())
 			} else {
-				util.LogError("%s Conn ERROR", tstfun)
+				slog.Errorf("%s Conn ERROR", tstfun)
 				return
 			}
 			first_conn_read += 1
 		} else {
 			first_conn_read += 1
 			if pb_type == pushproto.Talk_BUSSINESS {
-				util.LogInfo(">>>>>>%s Recv PASS readtimes:%d", tstfun, first_conn_read)
+				slog.Infof(">>>>>>%s Recv PASS readtimes:%d", tstfun, first_conn_read)
 
 				if ackDelay+1 == first_conn_read {
 					ack := &pushproto.Talk{
@@ -470,7 +472,7 @@ func tstBussinessSend(ackDelay int) {
 
 					data, err := proto.Marshal(ack)
 					if err != nil {
-						util.LogError("%s ERROR:syn proto marshal error:%s", tstfun, err)
+						slog.Errorf("%s ERROR:syn proto marshal error:%s", tstfun, err)
 						return
 					}
 
@@ -478,7 +480,7 @@ func tstBussinessSend(ackDelay int) {
 
 					ln, err := conn.Write(sb2)
 					if ln != len(sb2) || err != nil {
-						util.LogError("%s ERROR:send error:%s", tstfun, err)
+						slog.Errorf("%s ERROR:send error:%s", tstfun, err)
 						return
 					}
 
@@ -487,7 +489,7 @@ func tstBussinessSend(ackDelay int) {
 
 
 			} else {
-				util.LogError("%s Recv ERROR", tstfun)
+				slog.Errorf("%s Recv ERROR", tstfun)
 				return
 			}
 
@@ -496,7 +498,7 @@ func tstBussinessSend(ackDelay int) {
 
 	})
 	// waiting for connection
-	util.LogInfo("%s waiting for connection", tstfun)
+	slog.Infof("%s waiting for connection", tstfun)
 	time.Sleep(1000 * 1000 * 1000 * 1)
 
 
@@ -507,7 +509,7 @@ func tstBussinessSend(ackDelay int) {
 	}
 	bd, err := proto.Marshal(btst)
 	if err != nil {
-		util.LogError("%s ERROR:proto marshal error:%s", tstfun, err)
+		slog.Errorf("%s ERROR:proto marshal error:%s", tstfun, err)
 		return
 	}
 
@@ -526,14 +528,14 @@ func tstBussinessSend(ackDelay int) {
 	if response.StatusCode == 200 {
 		body, err := ioutil.ReadAll(response.Body)
 		if err != nil {
-			util.LogError("%s Push return ERROR %s", tstfun, err)
+			slog.Errorf("%s Push return ERROR %s", tstfun, err)
 			return
 		}
 
-		util.LogInfo("%s Push return %s", tstfun, body)
+		slog.Infof("%s Push return %s", tstfun, body)
 
 	} else {
-		util.LogError("%s Push ERROR", tstfun)
+		slog.Errorf("%s Push ERROR", tstfun)
 		return
 	}
 
@@ -566,6 +568,8 @@ func tstBussinessSend(ackDelay int) {
 // 多连接建立推送
 
 func main() {
+    slog.Init(os.Stdout)
+
 
 	tstErrpad()
 	tstErrEmptyPack()

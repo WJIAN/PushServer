@@ -4,15 +4,15 @@ import (
 	//"fmt"
 //	"log"
 
-	"push_server/conn"
+
 	"encoding/json"
 	"os"
 //	"io/ioutil"
 )
 
 import (
-	"push_server/slog"
-
+	"PushServer/slog"
+	"PushServer/conn"
 )
 
 

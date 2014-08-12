@@ -16,9 +16,9 @@ import (
 
 // my lib
 import (
-	"push_server/pb"
-	"push_server/util"
-	"push_server/slog"
+	"PushServer/pb"
+	"PushServer/util"
+	"PushServer/slog"
 
 )
 
