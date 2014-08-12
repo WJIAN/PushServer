@@ -64,10 +64,13 @@ func (self *Client) sendREROUTE() {
 
 
 func (self *Client) sendSYNACK(client_id string) {
+	fun := "Client.sendSYNACK"
 	synack := &pushproto.Talk{
 		Type: pushproto.Talk_SYNACK.Enum(),
 		Clientid: proto.String(client_id),
 	}
+
+	slog.Debugf("%s msg:%s", fun, synack)
 
 	data, _ := proto.Marshal(synack)
 	self.Send(util.Packdata(data))
@@ -75,9 +78,12 @@ func (self *Client) sendSYNACK(client_id string) {
 }
 
 func (self *Client) sendHEART() {
+	fun := "Client.sendHEART"
 	synack := &pushproto.Talk{
 		Type: pushproto.Talk_HEART.Enum(),
 	}
+
+	slog.Debugf("%s msg:%s", fun, synack)
 
 	data, _ := proto.Marshal(synack)
 	self.Send(util.Packdata(data))
@@ -164,6 +170,9 @@ func (self *Client) SendBussiness(ziptype int32, datatype int32, data []byte) (u
 		Datatype: proto.Int32(datatype),
 		Bussdata: data,
 	}
+
+
+	slog.Debugf("%s msg:%s", fun, buss)
 
 	spb, err := proto.Marshal(buss)
 	if err != nil {
