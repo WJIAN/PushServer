@@ -68,6 +68,7 @@ func (self *ConnectionManager) delClient(client_id string, addr string) {
 
 func (self *ConnectionManager) Send(client_id string, ziptype int32, datatype int32, data []byte) (uint64, string){
 	fun := "ConnectionManager.Send"
+	slog.Infof("%s cid:%s zip:%d datatype:%d data:%s", fun, client_id, ziptype, datatype, data)
 	if v, ok := self.clients[client_id]; ok {
 		return v.SendBussiness(ziptype, datatype, data)
 
@@ -139,7 +140,7 @@ func (self *ConnectionManager) Loop(addr string) {
 	//go self.trans()
 
 	for {
-		slog.Infof("%s Waiting for clients", fun)
+		//slog.Infof("%s Waiting for clients", fun)
 		connection, error := netListen.Accept()
 		if error != nil {
 			slog.Warnf("%s Client error: ", fun, error)

@@ -208,11 +208,17 @@ func (self *Client) dochgCLOSED(isRmManager bool) {
 }
 
 
-func (self *Client) addBussmsg(msgid uint64, n chan bool) {
+func (self *Client) addBussmsg(msgid uint64, n chan bool) bool {
 	self.state_lock.Lock()
 	defer self.state_lock.Unlock()
 
-	self.bussmsg[msgid] = n
+
+	if _, ok := self.bussmsg[msgid]; ok {
+		return false
+	} else {
+		self.bussmsg[msgid] = n
+		return true
+	}
 }
 
 func (self *Client) rmBussmsg(msgid uint64) {

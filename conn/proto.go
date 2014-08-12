@@ -91,7 +91,11 @@ func (self *Client) sendBussRetry(msgid uint64, pb []byte) {
 
 	ack_notify := make(chan bool)
 
-	self.addBussmsg(msgid, ack_notify)
+	if !self.addBussmsg(msgid, ack_notify) {
+		// msgid重复了
+		slog.Errorf("%s dup msgid:%d", fun, msgid)
+		return
+	}
 
 
 	retry_intv := 2

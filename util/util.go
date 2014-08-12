@@ -2,8 +2,11 @@ package util
 
 import (
 	"os"
+	"net"
 	"io/ioutil"
 	"encoding/binary"
+	"strings"
+	"errors"
 
 )
 
@@ -43,3 +46,25 @@ func GetFile(cfgFile string) ([]byte, error){
 
 	return data, err
 }
+
+func GetLocalIp() (string, error) {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return "", err
+	}
+
+
+	for _, addr := range addrs {
+		//fmt.Printf("Inter %v\n", addr)
+		ip := addr.String()
+		if "10." == ip[:3] {
+
+			return strings.Split(ip, "/")[0], nil
+		}
+
+	}
+
+	return "", errors.New("no inter ip")
+}
+
+
