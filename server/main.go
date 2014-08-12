@@ -1,13 +1,13 @@
 package main
 
 import (
-	//"fmt"
+//	"fmt"
 //	"log"
 
 
 	"encoding/json"
 	"os"
-//	"io/ioutil"
+	"io/ioutil"
 )
 
 import (
@@ -26,23 +26,40 @@ type config struct {
 
 }
 
+func getConfig(cfgFile string) ([]byte, error){
+	fin, err := os.Open(cfgFile)
+	defer fin.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := ioutil.ReadAll(fin)
+
+
+	return data, err
+}
+
 
 func main() {
-	cfg := config{ServId: 0, HttpServ: ":9090", ConnServ: ":9988", Secret: "24ffd40775b15129c3ce9211853560d1"}
-
-	js, _ := json.Marshal(&cfg)
-
     slog.Init(os.Stdout)
-
-	slog.Infof("%s", js)
+	if len(os.Args) < 2 {
+		slog.Panicln("Where config file?")
+	}
+	cfgFile := os.Args[1]
+	data, err := getConfig(cfgFile)
+	if err != nil {
+		slog.Panicln(cfgFile, err)
+	}
+	slog.Infof("cfgfile:%s cfg:%s", cfgFile, data)
+	var cfg config
+	json.Unmarshal(data, &cfg)
+	slog.Infoln(cfg)
 
 	conn_man := connection.NewConnectionManager(cfg.ServId, cfg.Secret)
 
-	httpport := cfg.HttpServ
-	connection.StartHttp(conn_man, httpport)
+	connection.StartHttp(conn_man, cfg.HttpServ)
 
-	service := cfg.ConnServ
-	conn_man.Loop(service)
+	conn_man.Loop(cfg.ConnServ)
 
 }
 

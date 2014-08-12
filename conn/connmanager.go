@@ -97,15 +97,13 @@ func (self *ConnectionManager) Loop(addr string) {
 
 	tcpAddr, error := net.ResolveTCPAddr("tcp", addr)
 	if error != nil {
-		slog.Fatalf("%s Error: Could not resolve address %s", fun, error)
-		panic("resolve address")
+		slog.Panicf("%s Error: Could not resolve address %s", fun, error)
 	}
 
 
 	netListen, error := net.Listen(tcpAddr.Network(), tcpAddr.String())
 	if error != nil {
-		slog.Fatalf("%s Error: Could not Listen %s", fun, error)
-		panic("listen address")
+		slog.Panicf("%s Error: Could not Listen %s", fun, error)
 
 	}
 	defer netListen.Close()
@@ -131,7 +129,7 @@ func NewConnectionManager(servId uint32, secret string) *ConnectionManager {
 	//v, err := gosnow.Default()
 	v, err := gosnow.NewSnowFlake(servId)
 	if err != nil {
-		panic("snowflake init error, msgid can not get!")
+		slog.Panicln("snowflake init error, msgid can not get!")
 	}
 
 	return &ConnectionManager {

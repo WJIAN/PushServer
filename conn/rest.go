@@ -170,8 +170,7 @@ func StartHttp(cm *ConnectionManager, httpport string) {
 
 		err := http.ListenAndServe(httpport, nil) //设置监听的端口
 		if err != nil {
-			slog.Fatalf("StartHttp ListenAndServe: %s", err)
-			panic("StartHttp ListenAndServe")
+			slog.Panicf("StartHttp ListenAndServe: %s", err)
 		}
 	}()
 }
