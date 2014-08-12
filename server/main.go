@@ -17,13 +17,13 @@ import (
 	"PushServer/conn"
 )
 
-func statOut() {
+func statOut(manager *connection.ConnectionManager) {
 	ticker := time.NewTicker(time.Second * 10)
     go func() {
 		for {
 			select {
 			case <-ticker.C:
-				slog.Infof("Stat NumGo:%d NumCgo:%d", runtime.NumGoroutine(), runtime.NumCgoCall())
+				slog.Infof("Stat NumGo:%d NumCgo:%d NumConn:%d", runtime.NumGoroutine(), runtime.NumCgoCall(), manager.NumConn())
 			}
 		}
         //for t := range C {
@@ -89,12 +89,14 @@ func main() {
 	slog.Infoln(cfg)
 
 
-	statOut()
+
 
 	// service
 	conn_man := connection.NewConnectionManager(cfg.ServId, cfg.Secret)
 
 	connection.StartHttp(conn_man, cfg.HttpServ)
+
+	statOut(conn_man)
 
 	conn_man.Loop(cfg.ConnServ)
 

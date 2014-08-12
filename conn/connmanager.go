@@ -92,6 +92,11 @@ func (self *ConnectionManager) secret() string {
 }
 
 
+func (self *ConnectionManager) NumConn() int {
+	return len(self.clients)
+}
+
+
 func (self *ConnectionManager) Loop(addr string) {
 	fun := "ConnectionManager.Loop"
 
