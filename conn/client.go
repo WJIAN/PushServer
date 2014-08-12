@@ -78,7 +78,6 @@ type Client struct {
 	send_lock          sync.Mutex
 	remoteaddr  string
 
-	// 先不考虑锁的问题，单进程执行的
 	bussmsg  map[uint64] chan bool
 
 	manager     *ConnectionManager

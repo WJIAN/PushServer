@@ -70,6 +70,9 @@ func (self *Client) sendHEART() {
 
 func (self *Client) sendBussRetry(msgid uint64, pb []byte) {
 	fun := "Client.sendBussRetry"
+	// 启动发送时间
+	bg := time.Now().UnixNano()
+
 	ack_notify := make(chan bool)
 
 	self.addBussmsg(msgid, ack_notify)
@@ -85,10 +88,12 @@ func (self *Client) sendBussRetry(msgid uint64, pb []byte) {
 
 			select {
 			case v := <-ack_notify:
+				ed := time.Now().UnixNano()
+				useTm := (ed - bg)/1000
 				if v {
-					slog.Infof("%s client:%s recv ack msgid:%d", fun, self, msgid)
+					slog.Infof("%s client:%s recv ack msgid:%d usetime:%d", fun, self, msgid, useTm)
 				} else {
-					slog.Infof("%s client:%s close not recv ack msgid:%d", fun, self, msgid)
+					slog.Infof("%s client:%s close not recv ack msgid:%d usetime:%d", fun, self, msgid, useTm)
 				}
 				return
 
@@ -98,7 +103,10 @@ func (self *Client) sendBussRetry(msgid uint64, pb []byte) {
 					self.Send(pb)
 				} else {
 					// 最后一次发送已经超时
-					slog.Infof("%s client:%s send timeout msgid:%d", fun, self, msgid)
+					ed := time.Now().UnixNano()
+					useTm := (ed - bg)/1000
+
+					slog.Infof("%s client:%s send timeout msgid:%d usetime:%d", fun, self, msgid, useTm)
 					// 断开连接
 					self.chgCLOSED()
 					return

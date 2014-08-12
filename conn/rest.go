@@ -81,7 +81,8 @@ func writeRestErr(w http.ResponseWriter, err string) {
 }
 
 func route(w http.ResponseWriter, r *http.Request) {
-	//fun := "rest.route"
+	fun := "rest.route"
+	slog.Infof("%s %s", fun, r.URL.Path)
 
 	js, _ := json.Marshal(&map[string]string{"heart": "300", "ip": "42.120.4.112", "port":"9988"})
 	fmt.Fprintf(w, "%s", js)
@@ -91,7 +92,9 @@ func route(w http.ResponseWriter, r *http.Request) {
 
 
 func installid(w http.ResponseWriter, r *http.Request) {
-	//fun := "rest.installid"
+	fun := "rest.installid"
+
+	slog.Infof("%s %s", fun, r.URL.Path)
 
 	uuidgen := uuid.NewUUID()
 	installid := uuidgen.String()

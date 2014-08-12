@@ -78,12 +78,19 @@ func main() {
 
 	// log out init
 	logFile := cfg.LogFile
-	logf, err := os.OpenFile(logFile, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
-	if err != nil {
-		log.Panicln(err)
+	if logFile != "" {
+		logf, err := os.OpenFile(logFile, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+		if err != nil {
+			log.Panicln(err)
+		}
+		defer logf.Close()
+		slog.Init(logf)
+	} else {
+		slog.Init(os.Stdout)
 	}
-	defer logf.Close()
-    slog.Init(logf)
+
+
+
 
 	slog.Infof("cfgfile:%s cfg:%s", cfgFile, data)
 	slog.Infoln(cfg)
