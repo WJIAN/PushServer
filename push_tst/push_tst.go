@@ -94,6 +94,7 @@ func packtst(conn net.Conn, len int, pad byte) {
 
 func connect() (net.Conn, error) {
 	return net.Dial("tcp", "127.0.0.1:9988")
+	//return net.Dial("tcp", "42.120.4.112:9988")
 
 }
 
@@ -516,6 +517,7 @@ func tstBussinessSend(ackDelay int) {
 
 	client := &http.Client{}
 	url := fmt.Sprintf("http://localhost:9090/push/%s/0/1", clientid)
+	//url := fmt.Sprintf("http://42.120.4.112:9090/push/%s/0/1", clientid)
 
 
 

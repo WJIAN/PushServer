@@ -2,7 +2,7 @@ package main
 
 import (
 //	"fmt"
-//	"log"
+	"log"
 
 
 	"encoding/json"
@@ -24,14 +24,18 @@ type config struct {
 
 	Secret string
 
+	LogFile string
+
 }
 
 func getConfig(cfgFile string) ([]byte, error){
 	fin, err := os.Open(cfgFile)
-	defer fin.Close()
+
 	if err != nil {
 		return nil, err
 	}
+
+	defer fin.Close()
 
 	data, err := ioutil.ReadAll(fin)
 
@@ -41,20 +45,34 @@ func getConfig(cfgFile string) ([]byte, error){
 
 
 func main() {
-    slog.Init(os.Stdout)
+	// getconfig
 	if len(os.Args) < 2 {
-		slog.Panicln("Where config file?")
+		log.Panicln("Where config file?")
 	}
 	cfgFile := os.Args[1]
 	data, err := getConfig(cfgFile)
 	if err != nil {
-		slog.Panicln(cfgFile, err)
+		log.Panicln(cfgFile, err)
 	}
-	slog.Infof("cfgfile:%s cfg:%s", cfgFile, data)
+	log.Printf("cfgfile:%s cfg:%s", cfgFile, data)
 	var cfg config
 	json.Unmarshal(data, &cfg)
+	log.Println(cfg)
+
+
+	// log out init
+	logFile := cfg.LogFile
+	logf, err := os.OpenFile(logFile, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+	if err != nil {
+		log.Panicln(err)
+	}
+	defer logf.Close()
+    slog.Init(logf)
+
+	slog.Infof("cfgfile:%s cfg:%s", cfgFile, data)
 	slog.Infoln(cfg)
 
+	// service
 	conn_man := connection.NewConnectionManager(cfg.ServId, cfg.Secret)
 
 	connection.StartHttp(conn_man, cfg.HttpServ)
