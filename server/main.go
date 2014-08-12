@@ -3,6 +3,8 @@ package main
 import (
 //	"fmt"
 	"log"
+	"time"
+	"runtime"
 
 
 	"encoding/json"
@@ -15,6 +17,20 @@ import (
 	"PushServer/conn"
 )
 
+func statOut() {
+	ticker := time.NewTicker(time.Second * 10)
+    go func() {
+		for {
+			select {
+			case <-ticker.C:
+				slog.Infof("Stat NumGo:%d NumCgo:%d", runtime.NumGoroutine(), runtime.NumCgoCall())
+			}
+		}
+        //for t := range C {
+        //}
+    }()
+
+}
 
 type config struct {
 	ServId uint32
@@ -71,6 +87,9 @@ func main() {
 
 	slog.Infof("cfgfile:%s cfg:%s", cfgFile, data)
 	slog.Infoln(cfg)
+
+
+	statOut()
 
 	// service
 	conn_man := connection.NewConnectionManager(cfg.ServId, cfg.Secret)
