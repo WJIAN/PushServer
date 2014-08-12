@@ -46,6 +46,22 @@ func (self *Client) errNotifyCLOSED(errmsg string) {
 }
 
 
+// reroute 不关闭连接，让客户端在完成当前逻辑后，
+// 主动断开连接，重新路由
+// 优雅的实现平滑的服务器下线
+func (self *Client) sendREROUTE() {
+	fun := "Client.sendREROUTE"
+	pb := &pushproto.Talk {
+		Type: pushproto.Talk_REROUTE.Enum(),
+	}
+
+	slog.Debugf("%s %s pb:%s", fun, self, pb)
+	data, _ := proto.Marshal(pb)
+	self.Send(util.Packdata(data))
+
+}
+
+
 
 func (self *Client) sendSYNACK(client_id string) {
 	synack := &pushproto.Talk{
@@ -214,6 +230,10 @@ func (self *Client) proto(data []byte) {
 		self.recvACK(pb)
 
 
+	}
+
+	if self.manager.isOffline() {
+		self.sendREROUTE()
 	}
 
 

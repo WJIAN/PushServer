@@ -162,6 +162,27 @@ func push(w http.ResponseWriter, r *http.Request) {
 }
 
 
+func setoffline(w http.ResponseWriter, r *http.Request) {
+	fun := "rest.setoffline"
+
+	slog.Infof("%s %s", fun, r.URL.Path)
+
+	connman.setOffline()
+	js, _ := json.Marshal(&RestReturn{Code: 0})
+	fmt.Fprintf(w, "%s", js)
+
+}
+
+
+func setonline(w http.ResponseWriter, r *http.Request) {
+	fun := "rest.setonline"
+
+	slog.Infof("%s %s", fun, r.URL.Path)
+
+	connman.setOnline()
+}
+
+
 var connman *ConnectionManager
 
 func StartHttp(cm *ConnectionManager, httpport string) {
@@ -170,6 +191,8 @@ func StartHttp(cm *ConnectionManager, httpport string) {
 		http.HandleFunc("/push/", push)
 		http.HandleFunc("/route1", route)
 		http.HandleFunc("/installid1", installid)
+		http.HandleFunc("/setoffline", setoffline)
+		http.HandleFunc("/setonline", setonline)
 
 		err := http.ListenAndServe(httpport, nil) //设置监听的端口
 		if err != nil {

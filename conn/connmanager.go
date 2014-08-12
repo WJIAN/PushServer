@@ -31,6 +31,7 @@ type ConnectionManager struct {
 	sf *gosnow.SnowFlake
 
 	sec string
+	offline bool
 }
 
 
@@ -91,6 +92,26 @@ func (self *ConnectionManager) secret() string {
 	return self.sec
 }
 
+func (self *ConnectionManager) isOffline() bool {
+	return self.offline
+}
+
+
+func (self *ConnectionManager) setOffline() {
+	self.offline = true
+
+    for _, v := range self.clients {
+		v.sendREROUTE()
+	}
+
+}
+
+
+func (self *ConnectionManager) setOnline() {
+	self.offline = false
+}
+
+
 
 func (self *ConnectionManager) NumConn() int {
 	return len(self.clients)
@@ -143,6 +164,8 @@ func NewConnectionManager(servId uint32, secret string) *ConnectionManager {
 
 		sf: v,
 		sec: secret,
+
+		offline: false,
 
 	}
 
