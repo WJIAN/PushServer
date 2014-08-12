@@ -22,11 +22,13 @@ type config struct {
 	HttpServ string
 	ConnServ string
 
+	Secret string
+
 }
 
 
 func main() {
-	cfg := config{ServId: 0, HttpServ: ":9090", ConnServ: ":9988"}
+	cfg := config{ServId: 0, HttpServ: ":9090", ConnServ: ":9988", Secret: "24ffd40775b15129c3ce9211853560d1"}
 
 	js, _ := json.Marshal(&cfg)
 
@@ -34,7 +36,7 @@ func main() {
 
 	slog.Infof("%s", js)
 
-	conn_man := connection.NewConnectionManager(cfg.ServId)
+	conn_man := connection.NewConnectionManager(cfg.ServId, cfg.Secret)
 
 	httpport := cfg.HttpServ
 	connection.StartHttp(conn_man, httpport)

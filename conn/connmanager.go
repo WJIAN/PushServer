@@ -29,6 +29,8 @@ type ConnectionManager struct {
 	clients map[string]*Client
 
 	sf *gosnow.SnowFlake
+
+	sec string
 }
 
 
@@ -85,6 +87,11 @@ func (self *ConnectionManager) Msgid() (uint64, error) {
 }
 
 
+func (self *ConnectionManager) secret() string {
+	return self.sec
+}
+
+
 func (self *ConnectionManager) Loop(addr string) {
 	fun := "ConnectionManager.Loop"
 
@@ -120,7 +127,7 @@ func (self *ConnectionManager) Loop(addr string) {
 }
 
 
-func NewConnectionManager(servId uint32) *ConnectionManager {
+func NewConnectionManager(servId uint32, secret string) *ConnectionManager {
 	//v, err := gosnow.Default()
 	v, err := gosnow.NewSnowFlake(servId)
 	if err != nil {
@@ -132,6 +139,7 @@ func NewConnectionManager(servId uint32) *ConnectionManager {
 		clients: make(map[string]*Client),
 
 		sf: v,
+		sec: secret,
 
 	}
 

@@ -145,7 +145,7 @@ func (self *Client) chgESTABLISHED(pb *pushproto.Talk) {
 
 	appid := pb.GetAppid()
 	installid := pb.GetInstallid()
-	sec := "9b0319bc5c05055283cee2533abab270"
+	sec := self.manager.secret()
 
 
 	h := sha1.Sum([]byte(appid+installid+sec))
