@@ -211,6 +211,27 @@ func (self *Client) recvACK(pb *pushproto.Talk) {
 
 }
 
+func (self *Client) sendACK(msgid uint64) {
+	fun := "Client.sendACK"
+	pb := &pushproto.Talk{
+		Type: pushproto.Talk_ACK.Enum(),
+		Msgid: proto.Uint64(msgid),
+	}
+
+	slog.Debugf("%s client:%s msg:%s", fun, self, pb)
+
+	data, _ := proto.Marshal(pb)
+	self.Send(util.Packdata(data))
+
+}
+
+
+func (self *Client) recvBUSSINESS(pb *pushproto.Talk) {
+	msgid := pb.GetMsgid()
+
+	self.sendACK(msgid)
+
+}
 
 func (self *Client) recvSYN(pb *pushproto.Talk) {
 	self.chgESTABLISHED(pb)
@@ -241,6 +262,11 @@ func (self *Client) proto(data []byte) {
 
 	} else if pb_type == pushproto.Talk_ACK {
 		self.recvACK(pb)
+
+
+
+	} else if pb_type == pushproto.Talk_BUSSINESS {
+		self.recvBUSSINESS(pb)
 
 
 	}
