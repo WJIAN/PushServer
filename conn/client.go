@@ -180,7 +180,7 @@ func (self *Client) dochgCLOSED(isRmManager bool) {
 	defer self.state_lock.Unlock()
 
 	if self.state == State_CLOSED {
-		slog.Warnf("%s client:%s is already:%s", fun, self, State_CLOSED)
+		slog.Infof("%s client:%s is already:%s", fun, self, State_CLOSED)
 		return
 	}
 
