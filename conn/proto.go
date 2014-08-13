@@ -157,15 +157,8 @@ func (self *Client) sendBussRetry(msgid uint64, pb []byte) {
 
 }
 
-func (self *Client) SendBussiness(ziptype int32, datatype int32, data []byte) (uint64, string) {
+func (self *Client) SendBussiness(msgid uint64, ziptype int32, datatype int32, data []byte) string {
 	fun := "Client.SendBussiness"
-
-	msgid, err := self.manager.Msgid()
-	if err != nil {
-		slog.Errorf("%s client:%s get msgid error:%s", fun, self, err)
-		return 0, self.remoteaddr
-	}
-
 
 	buss := &pushproto.Talk {
 		Type: pushproto.Talk_BUSSINESS.Enum(),
@@ -181,7 +174,7 @@ func (self *Client) SendBussiness(ziptype int32, datatype int32, data []byte) (u
 	spb, err := proto.Marshal(buss)
 	if err != nil {
 		slog.Errorf("%s client:%s marshaling error:%s", fun, self, err)
-		return 0, self.remoteaddr
+		return self.remoteaddr
 	}
 
 	p := util.Packdata(spb)
@@ -191,7 +184,7 @@ func (self *Client) SendBussiness(ziptype int32, datatype int32, data []byte) (u
 	self.Send(p)
 
 
-	return msgid, self.remoteaddr
+	return self.remoteaddr
 }
 
 // 如果retrybuss 逻辑正在处理超时时候，收到ack，怎么办？

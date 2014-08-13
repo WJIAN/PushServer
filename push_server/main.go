@@ -1,7 +1,7 @@
 package main
 
 import (
-//	"fmt"
+	"fmt"
 	"log"
 	"time"
 	"runtime"
@@ -36,12 +36,13 @@ func statOut(manager *connection.ConnectionManager) {
 type config struct {
 	ServId uint32
 
-	HttpServ string
-	ConnServ string
+	HttpPort int32
+	ConnPort int32
 
 	Secret string
 
 	LogFile string
+	LuaPath string
 
 }
 
@@ -82,34 +83,22 @@ func main() {
 	slog.Infoln(cfg)
 
 
-
-
 	// service
+	interIp, err := util.GetLocalIp()
+	if err != nil {
+		slog.Panicln("get local ip error")
+	}
+
+	connection.ConnStore = connection.NewStore(cfg.LuaPath, fmt.Sprintf("%s:%d", interIp, cfg.HttpPort))
+
+
 	conn_man := connection.NewConnectionManager(cfg.ServId, cfg.Secret)
 
-	connection.StartHttp(conn_man, cfg.HttpServ)
+	connection.StartHttp(conn_man, fmt.Sprintf(":%d", cfg.HttpPort))
 
 	statOut(conn_man)
 
-	conn_man.Loop(cfg.ConnServ)
+	conn_man.Loop(fmt.Sprintf(":%d", cfg.ConnPort))
 
 }
 
-// 规整的log
-
-// rediscluster
-// 支持apply, 一次多个命令过去,并统一获得返回
-// rediscluster 增删也采用req的方式进行
-
-// package put in github
-// 调整exported函数
-
-
-
-// Client close show log if not map
-// write once not enough
-
-// num use const config,not direct use
-
-// log level
-// connmanager req/recv/send use one goroutine?

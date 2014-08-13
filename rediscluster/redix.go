@@ -76,7 +76,12 @@ func (self *RedisPool) Cmd(multi_args map[string][]interface{}) map[string]*redi
 			continue
 		}
 
-		rv[k] = c.Cmd(v)
+		rp := c.Cmd(v)
+		rv[k] = rp
+		if rp.Type == redis.ErrorReply {
+			slog.Errorln("redis Cmd error", rp)
+			delete(self.rds, k)
+		}
 
 	}
 

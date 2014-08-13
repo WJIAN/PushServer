@@ -68,13 +68,20 @@ func (self *ConnectionManager) delClient(client_id string, addr string) {
 
 func (self *ConnectionManager) Send(client_id string, ziptype int32, datatype int32, data []byte) (uint64, string){
 	fun := "ConnectionManager.Send"
-	slog.Infof("%s cid:%s zip:%d datatype:%d data:%s", fun, client_id, ziptype, datatype, data)
+	msgid, err := self.Msgid()
+	if err != nil {
+		slog.Errorf("%s cid:%s get msgid error:%s", fun, client_id, err)
+		return 0, ""
+	}
+
+
+	slog.Infof("%s cid:%s msgid:%d zip:%d datatype:%d data:%s", fun, client_id, msgid, ziptype, datatype, data)
 	if v, ok := self.clients[client_id]; ok {
-		return v.SendBussiness(ziptype, datatype, data)
+		return msgid, v.SendBussiness(msgid, ziptype, datatype, data)
 
 	} else {
-		slog.Warnf("%s client_id %s not fond", fun, client_id)
-		return 0, ""
+		slog.Warnf("%s client_id %s not found msgid:%d", fun, client_id, msgid)
+		return msgid, ""
 	}
 
 
