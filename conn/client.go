@@ -11,7 +11,8 @@ import (
 	//"reflect"
 	"time"
 	"encoding/binary"
-	"crypto/sha1"
+	//"crypto/sha1"
+	"crypto/md5"
 	"sync"
 )
 
@@ -147,7 +148,7 @@ func (self *Client) chgESTABLISHED(pb *pushproto.Talk) {
 	sec := self.manager.secret()
 
 
-	h := sha1.Sum([]byte(appid+installid+sec))
+	h := md5.Sum([]byte(appid+installid+sec))
 	self.client_id = fmt.Sprintf("%x", h)
 
 
@@ -263,13 +264,26 @@ func (self *Client) sendData(s []byte, isclose bool) {
 
 	self.conn.SetWriteDeadline(time.Now().Add(time.Duration(5) * time.Second))
 	a, err := self.conn.Write(s)
-	slog.Infof("%s client:%s Send Write rv %d", fun, self, a)
+	slog.Infof("%s client:%s Send Write %d rv %d", fun, self, len(s), a)
 
 	if err != nil {
 		slog.Warnf("%s client:%s write error:%s ", fun, self, err)
 		self.chgCLOSED()
 		return
 	}
+
+	if len(s) != a {
+		// 我测试发现，write没有发现只写一半的情况，google了很多
+		// 也没有发现什么线索
+		// 这里暂且按照我测试结果进行实现，如果真的发现有写一半的情况
+		// 可以产生一次sendData的递归调用，但是这里暂且如此实现把
+		//self.sendData(s[a:], isclose)
+		//return
+		slog.Errorf("%s client:%s write %d rv %d ", fun, self, len(s), a)
+		self.chgCLOSED()
+		return
+	}
+
 
 	if isclose {
 		self.chgCLOSED()
