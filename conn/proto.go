@@ -39,7 +39,7 @@ func (self *Client) errNotifyCLOSED(errmsg string) {
 		Extdata: []byte(errmsg),
 	}
 
-	slog.Debugf("%s errmsg:%s", fun, errpb)
+	slog.Debugf("%s client:%s errmsg:%s", fun, self, errpb)
 	data, _ := proto.Marshal(errpb)
 	self.SendClose(util.Packdata(data))
 
@@ -55,7 +55,7 @@ func (self *Client) sendREROUTE() {
 		Type: pushproto.Talk_REROUTE.Enum(),
 	}
 
-	slog.Debugf("%s %s pb:%s", fun, self, pb)
+	slog.Debugf("%s client:%s pb:%s", fun, self, pb)
 	data, _ := proto.Marshal(pb)
 	self.Send(util.Packdata(data))
 
@@ -70,7 +70,7 @@ func (self *Client) sendSYNACK(client_id string) {
 		Clientid: proto.String(client_id),
 	}
 
-	slog.Debugf("%s msg:%s", fun, synack)
+	slog.Debugf("%s client:%s msg:%s", fun, self, synack)
 
 	data, _ := proto.Marshal(synack)
 	self.Send(util.Packdata(data))
@@ -83,7 +83,7 @@ func (self *Client) sendHEART() {
 		Type: pushproto.Talk_HEART.Enum(),
 	}
 
-	slog.Debugf("%s msg:%s", fun, synack)
+	slog.Debugf("%s client:%s msg:%s", fun, self, synack)
 
 	data, _ := proto.Marshal(synack)
 	self.Send(util.Packdata(data))
@@ -99,7 +99,7 @@ func (self *Client) sendBussRetry(msgid uint64, pb []byte) {
 
 	if !self.addBussmsg(msgid, ack_notify) {
 		// msgid重复了
-		slog.Errorf("%s dup msgid:%d", fun, msgid)
+		slog.Errorf("%s client:%s dup msgid:%d", fun, self, msgid)
 		return
 	}
 
@@ -158,7 +158,7 @@ func (self *Client) SendBussiness(ziptype int32, datatype int32, data []byte) (u
 
 	msgid, err := self.manager.Msgid()
 	if err != nil {
-		slog.Errorf("%s get msgid error:%s", fun, err)
+		slog.Errorf("%s client:%s get msgid error:%s", fun, self, err)
 		return 0, self.remoteaddr
 	}
 
@@ -172,11 +172,11 @@ func (self *Client) SendBussiness(ziptype int32, datatype int32, data []byte) (u
 	}
 
 
-	slog.Debugf("%s msg:%s", fun, buss)
+	slog.Debugf("%s client:%s msg:%s", fun, self, buss)
 
 	spb, err := proto.Marshal(buss)
 	if err != nil {
-		slog.Errorf("%s marshaling error: ", fun, err)
+		slog.Errorf("%s client:%s marshaling error:%s", fun, self, err)
 		return 0, self.remoteaddr
 	}
 
@@ -222,12 +222,12 @@ func (self *Client) proto(data []byte) {
 	pb := &pushproto.Talk{}
 	err := proto.Unmarshal(data, pb)
 	if err != nil {
-		slog.Warnf("%s unmarshaling error: %s", fun, err)
+		slog.Warnf("%s client:%s unmarshaling error: %s", fun, self, err)
 		self.errNotifyCLOSED("package unmarshaling error")
 		return
 	}
 
-	slog.Debugf("%s recv proto: %s", fun, pb)
+	slog.Debugf("%s client:%s recv proto: %s", fun, self, pb)
 	pb_type := pb.GetType()
 
 

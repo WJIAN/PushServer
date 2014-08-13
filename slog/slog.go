@@ -40,6 +40,16 @@ func Init(w io.Writer) {
 
 }
 
+
+func Tracef(format string, v ...interface{}) {
+	lg.Printf("[TRACE] "+format, v...)
+}
+
+func Traceln(v ...interface{}) {
+	lg.Println(append([]interface{}{"[TRACE]"}, v...)...)
+}
+
+
 func Debugf(format string, v ...interface{}) {
 	lg.Printf("[DEBUG] "+format, v...)
 }

@@ -42,7 +42,7 @@ func (self *ConnectionManager) addClient(cli *Client) {
 	if v, ok := self.clients[client_id]; ok {
 		v.errNotifyCLOSED("dup client add client")
 		delete(self.clients, client_id)
-		slog.Warnf("%s dup client add client_id %s", fun, client_id)
+		slog.Warnf("%s dup client add client_id %s client:%s", fun, client_id, cli)
 
 	}
 	self.clients[client_id] = cli

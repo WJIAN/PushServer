@@ -86,7 +86,7 @@ type Client struct {
 
 func (self *Client) String() string {
 	//if len(self.client_id) < 7 {
-		return fmt.Sprintf("%s@%s", self.client_id, self.remoteaddr)
+	return fmt.Sprintf("%s@%s@%s", self.client_id, self.remoteaddr, self.state)
 	//} else {
 	//	return fmt.Sprintf("%s@%s", self.client_id[:7], self.remoteaddr)
 	//}
@@ -124,7 +124,7 @@ func (self *Client) chgCLOSED2TCP_READY(c net.Conn) {
 	old_state := self.state
 	self.state = State_TCP_READY
 
-	slog.Infof("%s change client:%s %s:%s", fun, self, old_state, self.state)
+	slog.Infof("%s client:%s change %s:%s", fun, self, old_state, self.state)
 
 	go self.Recv()
 }
@@ -155,7 +155,7 @@ func (self *Client) chgESTABLISHED(pb *pushproto.Talk) {
 	old_state := self.state
 	self.state = State_ESTABLISHED
 
-	slog.Infof("%s change client:%s %s:%s", fun, self, old_state, self.state)
+	slog.Infof("%s client:%s change %s:%s", fun, self, old_state, self.state)
 
 	self.sendSYNACK(self.client_id)
 	self.manager.addClient(self)
@@ -204,7 +204,7 @@ func (self *Client) dochgCLOSED(isRmManager bool) {
 	old_state := self.state
 	self.state = State_CLOSED
 
-	slog.Infof("%s change client:%s %s:%s", fun, self, old_state, self.state)
+	slog.Infof("%s client:%s change %s:%s", fun, self, old_state, self.state)
 
 }
 
@@ -264,7 +264,7 @@ func (self *Client) sendData(s []byte, isclose bool) {
 
 	self.conn.SetWriteDeadline(time.Now().Add(time.Duration(5) * time.Second))
 	a, err := self.conn.Write(s)
-	slog.Infof("%s client:%s Send Write %d rv %d", fun, self, len(s), a)
+	//slog.Infof("%s client:%s Send Write %d rv %d", fun, self, len(s), a)
 
 	if err != nil {
 		slog.Warnf("%s client:%s write error:%s ", fun, self, err)
@@ -316,7 +316,7 @@ func (self *Client) Recv() {
 		bufLen += uint64(bytesRead)
 
 
-	    slog.Infof("%s client:%s Recv: %d %d %d", fun, self, bytesRead, packBuff, bufLen)
+	    //slog.Infof("%s client:%s Recv: %d %d %d", fun, self, bytesRead, packBuff, bufLen)
 
 		for {
 			if (bufLen > 0) {
@@ -328,7 +328,7 @@ func (self *Client) Recv() {
 				    break
 				}
 
-				slog.Debugf("%s pacLen %d", fun, pacLen)
+				//slog.Debugf("%s client:%s pacLen %d", fun, self, pacLen)
 				// must < 5K
 				if pacLen > 1024 * 5 {
 					slog.Warnf("%s client:%s package too long error:%s", fun, self, packBuff[:bufLen])
