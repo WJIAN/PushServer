@@ -8,7 +8,8 @@ redis.call('HMSET', ck,
                   'remote', ARGV[1],
                   'appid', ARGV[2],
                   'installid', ARGV[3],
-                  'restaddr', ARGV[4]
+                  'restaddr', ARGV[4],
+                  'timeout', ARGV[5]+600
 )
 
 -- 3600*24*7 = 604800

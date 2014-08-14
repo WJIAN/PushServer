@@ -4,6 +4,15 @@ local msgid = ARGV[1]
 local pb = ARGV[2]
 local stamp = ARGV[3]
 
+local ck = 'I.'..cid
+
+local restaddr = redis.call('HGET', ck, 'restaddr')
+
+if not restaddr then
+   return "NOTFOUND"
+end
+
+
 local mk = 'M.'..string.sub(cid, 1, 5)..'.'..msgid
 --local mk = 'M.'..cid..'.'..msgid
 local smk = 'SM.'..cid
@@ -28,3 +37,14 @@ redis.call('ZADD', smk,
 
 -- 3600*24*7 = 604800
 redis.call('EXPIRE', smk, 604800)
+
+local link_timeout = redis.call('HGET', ck, 'timeout')
+if not link_timeout then
+   return "CLOSED"
+end
+
+if tonumber(stamp) > tonumber(link_timeout) then
+   return "CLOSED"
+else
+   return restaddr
+end

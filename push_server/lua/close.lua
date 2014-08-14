@@ -13,8 +13,7 @@ local vs = redis.call('HMGET', ck,
 
 if vs[1] == remote and vs[2] == restaddr then
    redis.call('HMSET', ck,
-              'remote', "",
-              'restaddr', "",
+              'timeout', 0,
               'closestamp', stamp
    )
 

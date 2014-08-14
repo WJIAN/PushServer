@@ -144,7 +144,8 @@ func (self *Store) rmMsg(cid string, msgid uint64) {
 }
 
 
-func (self *Store) addMsg(cid string, msgid uint64, pb[]byte) {
+func (self *Store) addMsg(cid string, msgid uint64, pb[]byte) string {
+	fun := "Store.addMsg"
     cmd0 := []interface{}{
 		"evalsha", self.lua_addmsg.hash,
 		1,
@@ -164,6 +165,18 @@ func (self *Store) addMsg(cid string, msgid uint64, pb[]byte) {
 	slog.Debugln("total rv", rp)
 
 
+	for _, r := range(rp) {
+		rvs, err := r.Str()
+		if err != nil {
+			slog.Errorf("%s err:%s", fun, err)
+			break
+		} else {
+			return rvs
+		}
+
+
+	}
+	return "NOTFOUND"
 }
 
 
@@ -177,6 +190,7 @@ func (self *Store) heart(cli *Client) {
 		cli.appid,
 		cli.installid,
 		self.restAddr,
+		time.Now().Unix(),
 	}
 
 
@@ -227,6 +241,7 @@ func (self *Store) syn(cli *Client) (map[uint64][]byte, []uint64) {
 		cli.appid,
 		cli.installid,
 		self.restAddr,
+		time.Now().Unix(),
 	}
 
 

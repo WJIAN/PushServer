@@ -96,7 +96,17 @@ func (self *ConnectionManager) Send(client_id string, ziptype int32, datatype in
 		return 0, "proto marshal error"
 	}
 
-	ConnStore.addMsg(client_id, msgid, spb)
+	restaddr := ConnStore.addMsg(client_id, msgid, spb)
+	slog.Tracef("%s restaddr:%s", fun, restaddr)
+	if restaddr == "NOTFOUND" {
+		// 错误的clientid，或者用户可能超多一周没有建立过连接
+		return 0, restaddr
+
+	} else if restaddr == "CLOSED" {
+		return msgid, restaddr
+	}
+
+
 
 
 
