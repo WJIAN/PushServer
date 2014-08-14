@@ -25,6 +25,8 @@ type LuaDo struct {
 
 type Store struct {
 	lua_syn *LuaDo
+	lua_heart *LuaDo
+	lua_close *LuaDo
 	lua_addmsg *LuaDo
 	lua_rmmsg *LuaDo
 //	lua_heart *LuaDo
@@ -39,6 +41,8 @@ type Store struct {
 
 const (
 	LUA_SYN string = "syn.lua"
+	LUA_HEART string = "heart.lua"
+	LUA_CLOSE string = "close.lua"
 	LUA_ADDMSG string = "addmsg.lua"
 	LUA_RMMSG string = "rmmsg.lua"
 
@@ -69,6 +73,8 @@ func loadLuaFile(path string, file string) *LuaDo {
 func NewStore(luapath string, restaddr string) *Store {
 	return &Store {
 		lua_syn: loadLuaFile(luapath, LUA_SYN),
+		lua_heart: loadLuaFile(luapath, LUA_HEART),
+		lua_close: loadLuaFile(luapath, LUA_CLOSE),
 		lua_addmsg: loadLuaFile(luapath, LUA_ADDMSG),
 		lua_rmmsg: loadLuaFile(luapath, LUA_RMMSG),
 
@@ -161,16 +167,65 @@ func (self *Store) addMsg(cid string, msgid uint64, pb[]byte) {
 }
 
 
+func (self *Store) heart(cli *Client) {
+	fun := "Store.heart"
+    cmd0 := []interface{}{
+		"evalsha", self.lua_heart.hash,
+		1,
+		cli.client_id,
+		cli.remoteaddr,
+		cli.appid,
+		cli.installid,
+		self.restAddr,
+	}
+
+
+	mcmd := make(map[string][]interface{})
+    mcmd["127.0.0.1:9600"] = cmd0
+
+
+	rp := self.doCmd(self.lua_heart, mcmd)
+
+
+	slog.Debugln(fun, "total rv", rp)
+
+}
+
+
+func (self *Store) close(cli *Client) {
+	fun := "Store.heart"
+    cmd0 := []interface{}{
+		"evalsha", self.lua_close.hash,
+		1,
+		cli.client_id,
+		cli.remoteaddr,
+		self.restAddr,
+		time.Now().Unix(),
+	}
+
+
+	mcmd := make(map[string][]interface{})
+    mcmd["127.0.0.1:9600"] = cmd0
+
+
+	rp := self.doCmd(self.lua_close, mcmd)
+
+
+	slog.Debugln(fun, "total rv", rp)
+
+}
+
+
 // 如果有发送失败的消息，则返回发送失败的消息重传
-func (self *Store) syn(cli *Client, appid string, installid string) (map[uint64][]byte, []uint64) {
+func (self *Store) syn(cli *Client) (map[uint64][]byte, []uint64) {
 	fun := "Store.syn"
     cmd0 := []interface{}{
 		"evalsha", self.lua_syn.hash,
 		1,
 		cli.client_id,
 		cli.remoteaddr,
-		appid,
-		installid,
+		cli.appid,
+		cli.installid,
 		self.restAddr,
 	}
 

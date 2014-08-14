@@ -15,7 +15,8 @@ redis.call('HMSET', ck,
 redis.call('EXPIRE', ck, 604800)
 
 
-local msgsids = redis.call('ZREVRANGE', smk, -10, -1)
+--local msgsids = redis.call('ZREVRANGE', smk, -10, -1)
+local msgsids = redis.call('ZRANGE', smk, 0, -1)
 
 local msgs = {}
 for i, v in ipairs(msgsids) do
@@ -25,6 +26,7 @@ for i, v in ipairs(msgsids) do
       msgs[#msgs+1] = v
       msgs[#msgs+1] = redis.call("GET", mk)
    else
+      -- 超时的不要
       redis.call('ZREM', smk, v)
    end
 

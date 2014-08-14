@@ -88,6 +88,8 @@ func (self *Client) sendHEART() {
 	data, _ := proto.Marshal(synack)
 	self.Send(util.Packdata(data))
 
+	ConnStore.heart(self)
+
 }
 
 func (self *Client) sendBussRetry(msgid uint64, pb []byte) {
@@ -248,10 +250,8 @@ func (self *Client) recvSYN(pb *pushproto.Talk) {
 		return
 	}
 
-	appid := pb.GetAppid()
-	installid := pb.GetInstallid()
 
-	failmsgs, sortkeys := ConnStore.syn(self, appid, installid)
+	failmsgs, sortkeys := ConnStore.syn(self)
 
 	// 发送之前没有成功发送的消息
 	slog.Infof("%s client:%s get fail send msgs:%d", fun, self, len(failmsgs))

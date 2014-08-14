@@ -72,6 +72,8 @@ type Client struct {
 	state         stateType
 	// -------------------------
 
+	appid string
+	installid string
 
 	client_id   string // CLOSED TCP_READY SYN_RCVD is tmp id
 	conn        net.Conn
@@ -116,6 +118,8 @@ func (self *Client) chgCLOSED2TCP_READY(c net.Conn) {
 		return
 	}
 
+	self.appid = ""
+	self.installid = ""
 	self.client_id = "NULL"
 	self.conn = c
 	self.remoteaddr = c.RemoteAddr().String()
@@ -146,6 +150,9 @@ func (self *Client) chgESTABLISHED(pb *pushproto.Talk) bool {
 	appid := pb.GetAppid()
 	installid := pb.GetInstallid()
 	sec := self.manager.secret()
+
+	self.appid = appid
+	self.installid = installid
 
 
 	h := md5.Sum([]byte(appid+installid+sec))
@@ -207,6 +214,7 @@ func (self *Client) dochgCLOSED(isRmManager bool) {
 	old_state := self.state
 	self.state = State_CLOSED
 
+	ConnStore.close(self)
 	slog.Infof("%s client:%s change %s:%s", fun, self, old_state, self.state)
 
 }
