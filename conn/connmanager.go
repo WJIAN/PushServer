@@ -16,12 +16,14 @@ import (
 	//"code.google.com/p/go-uuid/uuid"
 //	"code.google.com/p/goprotobuf/proto"
 	"github.com/sdming/gosnow"
+
+	"code.google.com/p/goprotobuf/proto"
 )
 
 // my lib
 import (
 	"PushServer/slog"
-
+	"PushServer/pb"
 )
 
 
@@ -70,14 +72,37 @@ func (self *ConnectionManager) Send(client_id string, ziptype int32, datatype in
 	fun := "ConnectionManager.Send"
 	msgid, err := self.Msgid()
 	if err != nil {
-		slog.Errorf("%s cid:%s get msgid error:%s", fun, client_id, err)
-		return 0, ""
+		slog.Fatalf("%s cid:%s get msgid error:%s", fun, client_id, err)
+		return 0, "gen msgid error"
+	}
+
+	slog.Infof("%s cid:%s msgid:%d zip:%d datatype:%d data:%s", fun, client_id, msgid, ziptype, datatype, data)
+
+
+	buss := &pushproto.Talk {
+		Type: pushproto.Talk_BUSSINESS.Enum(),
+		Msgid: proto.Uint64(msgid),
+		Ziptype: proto.Int32(ziptype),
+		Datatype: proto.Int32(datatype),
+		Bussdata: data,
 	}
 
 
-	slog.Infof("%s cid:%s msgid:%d zip:%d datatype:%d data:%s", fun, client_id, msgid, ziptype, datatype, data)
+	//slog.Debugf("%s client:%s msg:%s", fun, self, buss)
+
+	spb, err := proto.Marshal(buss)
+	if err != nil {
+		slog.Fatalf("%s marshaling error:%s", fun, err)
+		return 0, "proto marshal error"
+	}
+
+	ConnStore.addMsg(client_id, msgid, spb)
+
+
+
 	if v, ok := self.clients[client_id]; ok {
-		return msgid, v.SendBussiness(msgid, ziptype, datatype, data)
+		//return msgid, v.SendBussiness(msgid, ziptype, datatype, data)
+		return msgid, v.SendBussiness(msgid, spb)
 
 	} else {
 		slog.Warnf("%s client_id %s not found msgid:%d", fun, client_id, msgid)

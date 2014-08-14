@@ -102,9 +102,12 @@ func connect() (net.Conn, error) {
 // 仅读取一次，不考虑TCP的拆包，粘包问题
 // 仅用于自动化测试检测
 func ReadOnce(conn net.Conn) ([]byte, error) {
+	fun := "ReadOnce"
+
 	buffer := make([]byte, 4096)
 	bytesRead, error := conn.Read(buffer)
 
+	slog.Infof("%s read %d %s", fun, bytesRead, error)
 
 	if error != nil {
 		return nil, error
@@ -123,6 +126,8 @@ func ReadOnce(conn net.Conn) ([]byte, error) {
 	}
 
 	apacLen := uint64(sz)+pacLen+1
+
+	slog.Infof("%s read read:%d lensz:%d len:%d proto+pad:%d", fun, bytesRead, sz, pacLen, apacLen)
 
 	pad := buffer[apacLen-1]
 	if pad != 0 {
@@ -152,7 +157,7 @@ func tstErrConn(conn net.Conn, tstfun string, sb []byte, readtimes int, checkFun
 
 	ln, err := conn.Write(sb)
 	if ln != len(sb) || err != nil {
-		slog.Errorf("%s ERROR:send error:%s", tstfun, err)
+		slog.Errorf("in tstErrConn %s ERROR:send error:%s", tstfun, err)
 		return
 	}
 
@@ -160,7 +165,7 @@ func tstErrConn(conn net.Conn, tstfun string, sb []byte, readtimes int, checkFun
 	for i := 0; i < readtimes; i++ {
 		data, err := ReadOnce(conn)
 		if err != nil {
-			slog.Errorf("%s ERROR:read connection error:%s", tstfun, err)
+			slog.Errorf("in tstErrConn %s ERROR:read connection error:%s", tstfun, err)
 			return
 		}
 
@@ -169,7 +174,7 @@ func tstErrConn(conn net.Conn, tstfun string, sb []byte, readtimes int, checkFun
 		pb := &pushproto.Talk{}
 		err = proto.Unmarshal(data, pb)
 		if err != nil {
-			slog.Errorf("%s ERROR:unmarshaling connection error:%s", tstfun, err)
+			slog.Errorf("in tstErrConn %s ERROR:unmarshaling connection error:%s", tstfun, err)
 			return
 		}
 
@@ -572,7 +577,7 @@ func tstBussinessSend(ackDelay int) {
 func main() {
     slog.Init(os.Stdout)
 
-
+/*
 	tstErrpad()
 	tstErrEmptyPack()
 	tstErrOneSizePack()
@@ -588,45 +593,12 @@ func main() {
 
 	tstBussinessSend(3)
 	//tstBussinessSend(1, 10)
-
+*/
+	tstClient()
 
 	var input string
 	fmt.Scanln(&input)
 	fmt.Println("done")
 
 
-	return
-    //packtst(conn, 300*1000000, 0)
-
-/*
-	packtst(conn, 0, 1)
-
-	conn = connect()
-	packtst(conn, 2, 1)
-
-
-    // tst zero pak
-	conn = connect()
-	packtst(conn, 0, 0)
-
-	// tst 1 pak
-	packtst(conn, 1, 0)
-
-
-	// tst 10 pak
-	packtst(conn, 10, 0)
-
-
-	// split pak
-    packtst(conn, 300, 0)
-
-
-
-
-	// > 5k
-	//packtst(conn, 1024*5+10, 0)
-
-
-
-*/
 }

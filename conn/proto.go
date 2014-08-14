@@ -117,6 +117,7 @@ func (self *Client) sendBussRetry(msgid uint64, pb []byte) {
 				ed := time.Now().UnixNano()
 				useTm := (ed - bg)/1000
 				if v {
+					ConnStore.rmMsg(self.client_id, msgid)
 					slog.Infof("%s client:%s recv ack msgid:%d usetime:%d", fun, self, msgid, useTm)
 				} else {
 					slog.Infof("%s client:%s close not recv ack msgid:%d usetime:%d", fun, self, msgid, useTm)
@@ -156,7 +157,7 @@ func (self *Client) sendBussRetry(msgid uint64, pb []byte) {
 	}()
 
 }
-
+/*
 func (self *Client) SendBussiness(msgid uint64, ziptype int32, datatype int32, data []byte) string {
 	fun := "Client.SendBussiness"
 
@@ -173,10 +174,13 @@ func (self *Client) SendBussiness(msgid uint64, ziptype int32, datatype int32, d
 
 	spb, err := proto.Marshal(buss)
 	if err != nil {
-		slog.Errorf("%s client:%s marshaling error:%s", fun, self, err)
+		slog.Fatalf("%s client:%s marshaling error:%s", fun, self, err)
 		return self.remoteaddr
 	}
 
+*/
+func (self *Client) SendBussiness(msgid uint64, spb []byte) string {
+	fun := "Client.SendBussiness"
 	p := util.Packdata(spb)
 	self.sendBussRetry(msgid, p)
 
@@ -238,7 +242,24 @@ func (self *Client) recvBUSSINESS(pb *pushproto.Talk) {
 }
 
 func (self *Client) recvSYN(pb *pushproto.Talk) {
-	self.chgESTABLISHED(pb)
+	fun := "Client.recvSYN"
+	ys := self.chgESTABLISHED(pb)
+	if !ys {
+		return
+	}
+
+	appid := pb.GetAppid()
+	installid := pb.GetInstallid()
+
+	failmsgs, sortkeys := ConnStore.syn(self, appid, installid)
+
+	// 发送之前没有成功发送的消息
+	slog.Infof("%s client:%s get fail send msgs:%d", fun, self, len(failmsgs))
+	for _, k := range(sortkeys) {
+		ra := self.SendBussiness(k, failmsgs[k])
+		slog.Tracef("%s client:%s remoteaddr:%s msgid:%d", fun, self, ra, k)
+	}
+
 }
 
 

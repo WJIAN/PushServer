@@ -129,7 +129,7 @@ func (self *Client) chgCLOSED2TCP_READY(c net.Conn) {
 	go self.Recv()
 }
 
-func (self *Client) chgESTABLISHED(pb *pushproto.Talk) {
+func (self *Client) chgESTABLISHED(pb *pushproto.Talk) bool {
 	fun := "Client.chgESTABLISHED"
 	self.state_lock.Lock()
 	defer self.state_lock.Unlock()
@@ -140,7 +140,7 @@ func (self *Client) chgESTABLISHED(pb *pushproto.Talk) {
 
 		slog.Warnf("%s client:%s is already:%s", fun, self, State_ESTABLISHED)
 		self.sendSYNACK(self.client_id)
-		return
+		return false
 	}
 
 	appid := pb.GetAppid()
@@ -159,7 +159,9 @@ func (self *Client) chgESTABLISHED(pb *pushproto.Talk) {
 
 	self.sendSYNACK(self.client_id)
 	self.manager.addClient(self)
-	ConnStore.syn(self, appid, installid)
+	return true
+
+
 
 }
 

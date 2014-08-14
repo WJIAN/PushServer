@@ -3,7 +3,9 @@ package connection
 
 import (
 	"fmt"
+	"time"
 	"crypto/sha1"
+	"strconv"
 
 	"github.com/fzzy/radix/redis"
 
@@ -23,6 +25,8 @@ type LuaDo struct {
 
 type Store struct {
 	lua_syn *LuaDo
+	lua_addmsg *LuaDo
+	lua_rmmsg *LuaDo
 //	lua_heart *LuaDo
 
 	pool *rediscluster.RedisPool
@@ -35,6 +39,8 @@ type Store struct {
 
 const (
 	LUA_SYN string = "syn.lua"
+	LUA_ADDMSG string = "addmsg.lua"
+	LUA_RMMSG string = "rmmsg.lua"
 
 )
 
@@ -61,12 +67,10 @@ func loadLuaFile(path string, file string) *LuaDo {
 
 
 func NewStore(luapath string, restaddr string) *Store {
-
-
-
-
 	return &Store {
 		lua_syn: loadLuaFile(luapath, LUA_SYN),
+		lua_addmsg: loadLuaFile(luapath, LUA_ADDMSG),
+		lua_rmmsg: loadLuaFile(luapath, LUA_RMMSG),
 
 		pool: rediscluster.NewRedisPool(),
 
@@ -79,40 +83,21 @@ func NewStore(luapath string, restaddr string) *Store {
 
 }
 
+func (self *Store) doCmd(luado *LuaDo, mcmd map[string][]interface{}) map[string]*redis.Reply {
+	fun := "Store.doCmd"
 
-// 如果有发送失败的消息，则返回发送失败的消息重传
-func (self *Store) syn(cli *Client, appid string, installid string) map[uint64][]byte {
-	infoKey := fmt.Sprintf("I.%s", cli.client_id)
-	msgKey := fmt.Sprintf("M.%s", clientid)
-
-    cmd0 := []interface{}{
-		"evalsha", self.lua_syn.hash,
-		2,
-		infoKey,
-		msgKey,
-		cli.remoteaddr,
-		appid,
-		installid,
-		self.restAddr,
-	}
-
-
-	mcmd := make(map[string][]interface{})
-    mcmd["127.0.0.1:9600"] = cmd0
-
-
-
+	slog.Debugln(fun, "cmd:", mcmd)
 
 	rp := self.pool.Cmd(mcmd)
-	slog.Debugln("evalsha1", rp)
+	slog.Debugln(fun, "evalsha1", rp)
 
 	loadcmd := make(map[string][]interface{})
 	for k, v := range(rp) {
 		if v.Type == redis.ErrorReply && v.String() == "NOSCRIPT No matching script. Please use EVAL." {
-			slog.Infoln("Store.syn load lua", k)
+			slog.Infoln(fun, "load lua", k)
 			mcmd[k][0] = "eval"
-			mcmd[k][1] = self.lua_syn.data
-			loadcmd[k] = cmd0
+			mcmd[k][1] = luado.data
+			loadcmd[k] = mcmd[k]
 		}
 
 	}
@@ -127,11 +112,105 @@ func (self *Store) syn(cli *Client, appid string, installid string) map[uint64][
 
 	}
 
+	return rp
+
+
+}
+
+func (self *Store) rmMsg(cid string, msgid uint64) {
+    cmd0 := []interface{}{
+		"evalsha", self.lua_rmmsg.hash,
+		1,
+		cid,
+		msgid,
+	}
+
+
+	mcmd := make(map[string][]interface{})
+    mcmd["127.0.0.1:9600"] = cmd0
+
+
+	rp := self.doCmd(self.lua_rmmsg, mcmd)
 
 	slog.Debugln("total rv", rp)
 
 
-	return make(map[uint64][]byte)
+}
+
+
+func (self *Store) addMsg(cid string, msgid uint64, pb[]byte) {
+    cmd0 := []interface{}{
+		"evalsha", self.lua_addmsg.hash,
+		1,
+		cid,
+		msgid,
+		pb,
+		time.Now().Unix(),
+	}
+
+
+	mcmd := make(map[string][]interface{})
+    mcmd["127.0.0.1:9600"] = cmd0
+
+
+	rp := self.doCmd(self.lua_addmsg, mcmd)
+
+	slog.Debugln("total rv", rp)
+
+
+}
+
+
+// 如果有发送失败的消息，则返回发送失败的消息重传
+func (self *Store) syn(cli *Client, appid string, installid string) (map[uint64][]byte, []uint64) {
+	fun := "Store.syn"
+    cmd0 := []interface{}{
+		"evalsha", self.lua_syn.hash,
+		1,
+		cli.client_id,
+		cli.remoteaddr,
+		appid,
+		installid,
+		self.restAddr,
+	}
+
+
+	mcmd := make(map[string][]interface{})
+    mcmd["127.0.0.1:9600"] = cmd0
+
+
+	rp := self.doCmd(self.lua_syn, mcmd)
+
+
+	slog.Debugln("total rv", rp)
+
+	rv := make(map[uint64][]byte)
+	sortkeys := []uint64{}
+	for addr, r := range(rp) {
+		ms, err := r.List()
+		if err != nil {
+			slog.Errorf("%s addr:%s err:%s", fun, addr, err)
+			continue
+		}
+
+		for i:=0; i<len(ms); i+=2 {
+			msgid := ms[i]
+			msg := ms[i+1]
+			mid, err := strconv.ParseUint(msgid, 10, 64)
+			if err != nil {
+				slog.Errorf("%s msgid:%s err:%s", fun, msgid, err)
+				continue
+			}
+			rv[mid] = []byte(msg)
+			sortkeys = append(sortkeys, mid)
+		}
+
+	}
+
+	slog.Traceln(rv, sortkeys)
+
+
+	return rv, sortkeys
 }
 
 
