@@ -106,8 +106,12 @@ func (self *Client) sendBussRetry(msgid uint64, pb []byte) {
 	}
 
 
-	retry_intv := 2
-	retry_time := 3
+	//retry_intv := 2
+	//retry_time := 3
+	// 取消重传，TCP对连接重传没什么意义
+	retry_intv := 1*60 // 超时设置5m
+	retry_time := 0 // 不重传
+
 
 	go func() {
 		defer self.rmBussmsg(msgid)
