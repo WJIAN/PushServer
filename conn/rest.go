@@ -4,6 +4,7 @@ import (
     "fmt"
     "net/http"
     "strings"
+    "bytes"
 //    "log"
 	"io/ioutil"
 	"encoding/json"
@@ -29,7 +30,43 @@ type RestReturn struct {
 	Link string `json:"link,omitempty"`
 }
 
+func inpushRest(restaddr string, clientid string, msgid uint64, sendData []byte) (uint64, string) {
+	fun := "rest.inpushRest"
+	client := &http.Client{}
+	url := fmt.Sprintf("http://%s/inpush/%s/%d", restaddr, clientid, msgid)
+	reqest, _ := http.NewRequest("POST", url, bytes.NewReader(sendData))
 
+	reqest.Header.Set("Connection","Keep-Alive")
+
+	response,_ := client.Do(reqest)
+	if response.StatusCode == 200 {
+		body, err := ioutil.ReadAll(response.Body)
+		if err != nil {
+			slog.Errorf("%s cid:%s Push %d return ERROR %s", fun, clientid, msgid, err)
+			return msgid, "TMPCLOSED"
+		}
+
+		var rr RestReturn
+		json.Unmarshal(body, &rr)
+
+		//slog.Infoln(rr)
+
+		if rr.Link == "" {
+			return msgid, "TMPCLOSED"
+		} else {
+			return msgid, rr.Link
+		}
+
+
+	} else {
+		slog.Errorf("%s cid:%s Push error %d", fun, clientid, msgid)
+
+		return msgid, "TMPCLOSED"
+
+	}
+
+
+}
 
 
 func debug_show_request(r *http.Request) {
@@ -105,6 +142,49 @@ func installid(w http.ResponseWriter, r *http.Request) {
 
 }
 
+
+// Method: POST
+// Uri: /inpush/CLIENT_ID/MSGID
+// Data: bussiness protobuf
+func inpush(w http.ResponseWriter, r *http.Request) {
+	fun := "rest.inpush"
+	//debug_show_request(r)
+	if r.Method != "POST" {
+		writeRestErr(w, "method err")
+		return
+	}
+
+	slog.Infof("%s %s", fun, r.URL.Path)
+	path := strings.Split(r.URL.Path, "/")
+	//slog.Info("%q", path)
+
+	if len(path) != 4 {
+		writeRestErr(w, "uri err")
+		return
+	}
+
+	// path[0] "", path[1] push
+	clientid := path[2]
+
+	mid, err := strconv.ParseUint(path[3], 10, 64)
+	if err != nil {
+		writeRestErr(w, "msgid err")
+		return
+	}
+
+	data, err := ioutil.ReadAll(r.Body);
+	if err != nil {
+		writeRestErr(w, "pb err")
+		return
+	}
+
+	msgid, link := ConnManager.sendDirect(clientid, mid, data)
+	slog.Debugf("%s msgid:%d link:%s", fun, msgid, link)
+	js, _ := json.Marshal(&RestReturn{Code: 0, Msgid: msgid, Link: link})
+	fmt.Fprintf(w, "%s", js)
+
+
+}
 
 // Method: POST
 // Uri: /push/CLIENT_ID/ZIPTYPE/DATATYPE
@@ -187,6 +267,7 @@ func setonline(w http.ResponseWriter, r *http.Request) {
 func StartHttp(httpport string) {
 	go func() {
 		http.HandleFunc("/push/", push)
+		http.HandleFunc("/inpush/", inpush)
 		http.HandleFunc("/route1", route)
 		http.HandleFunc("/installid1", installid)
 		http.HandleFunc("/setoffline", setoffline)

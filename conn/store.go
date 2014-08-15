@@ -89,6 +89,11 @@ func NewStore(luapath string, restaddr string) *Store {
 
 }
 
+func (self *Store) restAddress() string {
+
+	return self.restAddr
+}
+
 func (self *Store) doCmd(luado *LuaDo, mcmd map[string][]interface{}) map[string]*redis.Reply {
 	fun := "Store.doCmd"
 

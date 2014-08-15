@@ -68,7 +68,28 @@ func (self *ConnectionManager) delClient(client_id string, addr string) {
 
 }
 
-func (self *ConnectionManager) Send(client_id string, ziptype int32, datatype int32, data []byte) (uint64, string){
+// 其他接入调用，已经完成了客户端连接服务的查询工作，
+// 确认在本机，直接发送
+func (self *ConnectionManager) sendDirect(client_id string, msgid uint64, spb[]byte) (uint64, string) {
+
+	fun := "ConnectionManager.sendDirect"
+
+	if v, ok := self.clients[client_id]; ok {
+		//return msgid, v.SendBussiness(msgid, ziptype, datatype, data)
+		return msgid, v.SendBussiness(msgid, spb)
+
+	} else {
+		slog.Warnf("%s client_id %s not found msgid:%d", fun, client_id, msgid)
+		return msgid, "TMPCLOSED"
+	}
+
+
+
+}
+
+// 外部rest接口调用，发送前需要在redis中查询客户端连接的位置
+// 如果在本机，直接发送，否则转发到对应的接入
+func (self *ConnectionManager) Send(client_id string, ziptype int32, datatype int32, data []byte) (uint64, string) {
 	fun := "ConnectionManager.Send"
 	msgid, err := self.Msgid()
 	if err != nil {
@@ -97,7 +118,8 @@ func (self *ConnectionManager) Send(client_id string, ziptype int32, datatype in
 	}
 
 	restaddr := ConnStore.addMsg(client_id, msgid, spb)
-	slog.Tracef("%s restaddr:%s", fun, restaddr)
+	//slog.Tracef("%s restaddr:%s", fun, restaddr)
+	slog.Infof("%s restApi cid:%s addr:%s", fun, client_id, restaddr)
 	if restaddr == "NOTFOUND" {
 		// 错误的clientid，或者用户可能超多一周没有建立过连接
 		return 0, restaddr
@@ -108,15 +130,14 @@ func (self *ConnectionManager) Send(client_id string, ziptype int32, datatype in
 
 
 
-	if v, ok := self.clients[client_id]; ok {
-		//return msgid, v.SendBussiness(msgid, ziptype, datatype, data)
-		return msgid, v.SendBussiness(msgid, spb)
+	if restaddr == ConnStore.restAddress() {
+		return self.sendDirect(client_id, msgid, spb)
+		//return inpushRest(restaddr, client_id, msgid, spb)
 
 	} else {
-		slog.Warnf("%s client_id %s not found msgid:%d", fun, client_id, msgid)
-		return msgid, ""
-	}
+		return inpushRest(restaddr, client_id, msgid, spb)
 
+	}
 
 }
 
