@@ -3,3 +3,4 @@ push_server/push_server
 push_server/push.conf
 push_server/push.log
 router_server/router_server
+push_tst/push_tst.on

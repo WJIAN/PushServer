@@ -58,9 +58,14 @@ func GetLocalIp() (string, error) {
 		//fmt.Printf("Inter %v\n", addr)
 		ip := addr.String()
 		if "10." == ip[:3] {
-
+			return strings.Split(ip, "/")[0], nil
+		} else if "172." == ip[:4] {
+			return strings.Split(ip, "/")[0], nil
+		} else if "196." == ip[:4] {
 			return strings.Split(ip, "/")[0], nil
 		}
+
+
 
 	}
 
