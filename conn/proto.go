@@ -300,7 +300,7 @@ func (self *Client) proto(data []byte) {
 
 	}
 
-	if self.manager.isOffline() {
+	if ConnManager.isOffline() {
 		self.sendREROUTE()
 	}
 

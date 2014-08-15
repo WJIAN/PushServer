@@ -82,8 +82,6 @@ type Client struct {
 	remoteaddr  string
 
 	bussmsg  map[uint64] chan bool
-
-	manager     *ConnectionManager
 }
 
 func (self *Client) String() string {
@@ -98,7 +96,6 @@ func (self *Client) String() string {
 func NewClient(m *ConnectionManager, c net.Conn) *Client {
 	var cli *Client = &Client {
 		state: State_CLOSED,
-		manager: m,
 	}
 
 	cli.chgCLOSED2TCP_READY(c)
@@ -149,7 +146,7 @@ func (self *Client) chgESTABLISHED(pb *pushproto.Talk) bool {
 
 	appid := pb.GetAppid()
 	installid := pb.GetInstallid()
-	sec := self.manager.secret()
+	sec := ConnManager.secret()
 
 	self.appid = appid
 	self.installid = installid
@@ -165,7 +162,7 @@ func (self *Client) chgESTABLISHED(pb *pushproto.Talk) bool {
 	slog.Infof("%s client:%s change %s:%s", fun, self, old_state, self.state)
 
 	self.sendSYNACK(self.client_id)
-	self.manager.addClient(self)
+	ConnManager.addClient(self)
 	return true
 
 
@@ -195,7 +192,7 @@ func (self *Client) dochgCLOSED(isRmManager bool) {
 	}
 
 	if isRmManager && self.state == State_ESTABLISHED {
-		self.manager.delClient(self.client_id, self.remoteaddr)
+		ConnManager.delClient(self.client_id, self.remoteaddr)
 	}
 
 

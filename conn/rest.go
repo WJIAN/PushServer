@@ -153,7 +153,7 @@ func push(w http.ResponseWriter, r *http.Request) {
 	}
 
 
-	msgid, link := connman.Send(clientid, int32(ziptype), int32(datatype), data)
+	msgid, link := ConnManager.Send(clientid, int32(ziptype), int32(datatype), data)
 	slog.Debugf("%s msgid:%d link:%s", fun, msgid, link)
 	js, _ := json.Marshal(&RestReturn{Code: 0, Msgid: msgid, Link: link})
 	fmt.Fprintf(w, "%s", js)
@@ -167,7 +167,7 @@ func setoffline(w http.ResponseWriter, r *http.Request) {
 
 	slog.Infof("%s %s", fun, r.URL.Path)
 
-	connman.setOffline()
+	ConnManager.setOffline()
 	js, _ := json.Marshal(&RestReturn{Code: 0})
 	fmt.Fprintf(w, "%s", js)
 
@@ -179,14 +179,12 @@ func setonline(w http.ResponseWriter, r *http.Request) {
 
 	slog.Infof("%s %s", fun, r.URL.Path)
 
-	connman.setOnline()
+	ConnManager.setOnline()
 }
 
 
-var connman *ConnectionManager
 
-func StartHttp(cm *ConnectionManager, httpport string) {
-	connman = cm
+func StartHttp(httpport string) {
 	go func() {
 		http.HandleFunc("/push/", push)
 		http.HandleFunc("/route1", route)

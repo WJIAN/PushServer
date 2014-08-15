@@ -18,13 +18,17 @@ import (
 	"PushServer/conn"
 )
 
-func statOut(manager *connection.ConnectionManager) {
+func statOut() {
 	ticker := time.NewTicker(time.Second * 10)
     go func() {
 		for {
 			select {
 			case <-ticker.C:
-				slog.Infof("Stat NumGo:%d NumCgo:%d NumConn:%d", runtime.NumGoroutine(), runtime.NumCgoCall(), manager.NumConn())
+				slog.Infof("Stat NumGo:%d NumCgo:%d NumConn:%d",
+					runtime.NumGoroutine(),
+					runtime.NumCgoCall(),
+					connection.ConnManager.NumConn(),
+				)
 			}
 		}
         //for t := range C {
@@ -92,13 +96,13 @@ func main() {
 	connection.ConnStore = connection.NewStore(cfg.LuaPath, fmt.Sprintf("%s:%d", interIp, cfg.HttpPort))
 
 
-	conn_man := connection.NewConnectionManager(cfg.ServId, cfg.Secret)
+	connection.ConnManager = connection.NewConnectionManager(cfg.ServId, cfg.Secret)
 
-	connection.StartHttp(conn_man, fmt.Sprintf(":%d", cfg.HttpPort))
+	connection.StartHttp(fmt.Sprintf(":%d", cfg.HttpPort))
 
-	statOut(conn_man)
+	statOut()
 
-	conn_man.Loop(fmt.Sprintf(":%d", cfg.ConnPort))
+	connection.ConnManager.Loop(fmt.Sprintf(":%d", cfg.ConnPort))
 
 }
 
