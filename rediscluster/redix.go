@@ -8,6 +8,7 @@ import (
 	"github.com/fzzy/radix/redis"
 //	"os"
 	"time"
+	"sync"
 //	"reflect"
 )
 
@@ -19,16 +20,18 @@ import (
 
 type RedisEntry struct {
 	client *redis.Client
-	m chan bool
+
+	mu sync.Mutex
 
 }
 
 func (self *RedisEntry) lock() {
-	self.m <- true
+	self.mu.Lock()
 }
 
 func (self *RedisEntry) unlock() {
-	<-self.m
+	self.mu.Unlock()
+
 }
 
 
@@ -55,12 +58,14 @@ func (self *RedisPool) getConn(addr string) (*RedisEntry, error) {
 
 	} else {
 		slog.Infof("add conn addr:%s", addr)
-		c, err := redis.DialTimeout("tcp", addr, time.Duration(10)*time.Second)
+		c, err := redis.DialTimeout("tcp", addr, time.Duration(300)*time.Second)
 		if err != nil {
 			return nil, err
 		}
 
-		en := &RedisEntry{c, make(chan bool, 1)}
+		en := &RedisEntry{
+			client: c,
+		}
 		self.rds[addr] = en
 		return en, nil
 	}
