@@ -2,7 +2,7 @@
 local cid = KEYS[1]
 local msgid = ARGV[1]
 local pb = ARGV[2]
-local stamp = ARGV[3]
+local stamp = tonumber(ARGV[3])
 
 local ck = 'I.'..cid
 
@@ -38,12 +38,28 @@ redis.call('ZADD', smk,
 -- 3600*24*7 = 604800
 redis.call('EXPIRE', smk, 604800)
 
-local link_timeout = redis.call('HGET', ck, 'timeout')
-if not link_timeout then
+local timeout = redis.call('HGET', ck, 'timeout')
+if not timeout then
    return "CLOSED"
 end
 
-if tonumber(stamp) > tonumber(link_timeout) then
+if tonumber(timeout) == 0 then
+   -- 说明正常完成了close动作
+   local closestamp = redis.call('HGET', ck, 'closestamp')
+   if not closestamp then
+      return "CLOSED"
+   end
+
+   if stamp - tonumber(closestamp) > 300 then
+      return "CLOSED"
+   else
+      -- 对于连接关闭小于5分的
+      return "TMPCLOSED"
+   end
+
+end
+
+if stamp > tonumber(timeout) then
    return "CLOSED"
 else
    return restaddr
