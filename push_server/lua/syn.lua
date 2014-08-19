@@ -20,9 +20,10 @@ redis.call('EXPIRE', ck, 604800)
 local msgsids = redis.call('ZRANGE', smk, 0, -1)
 
 local msgs = {}
+local mkpref = 'M.'..string.sub(cid, 1, 5)
 for i, v in ipairs(msgsids) do
    --local mk = 'M.'..cid..'.'..v
-   local mk = 'M.'..string.sub(cid, 1, 5)..'.'..v
+   local mk = mkpref..'.'..v
    if redis.call("TTL", mk) > 0 then
       msgs[#msgs+1] = v
       msgs[#msgs+1] = redis.call("GET", mk)
