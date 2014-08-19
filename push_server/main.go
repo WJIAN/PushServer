@@ -48,6 +48,8 @@ type config struct {
 	LogFile string
 	LuaPath string
 
+	RedisAddr []string
+
 }
 
 
@@ -93,7 +95,7 @@ func main() {
 		slog.Panicln("get local ip error")
 	}
 
-	connection.ConnStore = connection.NewStore(cfg.LuaPath, fmt.Sprintf("%s:%d", interIp, cfg.HttpPort))
+	connection.ConnStore = connection.NewStore(cfg.LuaPath, fmt.Sprintf("%s:%d", interIp, cfg.HttpPort), cfg.RedisAddr)
 
 
 	connection.ConnManager = connection.NewConnectionManager(cfg.ServId, cfg.Secret)

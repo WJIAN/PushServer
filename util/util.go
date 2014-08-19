@@ -7,7 +7,7 @@ import (
 	"encoding/binary"
 	"strings"
 	"errors"
-
+	"hash/fnv"
 )
 
 
@@ -70,6 +70,13 @@ func GetLocalIp() (string, error) {
 	}
 
 	return "", errors.New("no inter ip")
+}
+
+
+func Strhash(s string) uint32 {
+    h := fnv.New32a()
+    h.Write([]byte(s))
+    return h.Sum32()
 }
 
 

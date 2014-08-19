@@ -7,6 +7,7 @@ import (
 	"crypto/sha1"
 	"strconv"
 
+
 	"github.com/fzzy/radix/redis"
 
 	"PushServer/rediscluster"
@@ -35,7 +36,7 @@ type Store struct {
 	luaPath string
 	restAddr string
 
-	redisAddr string
+	redisAddr []string
 
 }
 
@@ -63,14 +64,14 @@ func loadLuaFile(path string, file string) *LuaDo {
 	h := sha1.Sum(data)
 	hex := fmt.Sprintf("%x", h)
 
-	slog.Infof("loadLuaFile sha1:%s data:%s", hex, data)
+	slog.Infof("loadLuaFile sha1:%s file:%s", hex, fp)
 
 	return &LuaDo{hex, data}
 
 }
 
 
-func NewStore(luapath string, restaddr string) *Store {
+func NewStore(luapath string, restaddr string, redisaddr []string) *Store {
 	return &Store {
 		lua_syn: loadLuaFile(luapath, LUA_SYN),
 		lua_heart: loadLuaFile(luapath, LUA_HEART),
@@ -83,7 +84,7 @@ func NewStore(luapath string, restaddr string) *Store {
 		luaPath: luapath,
 		restAddr: restaddr,
 
-		redisAddr: "127.0.0.1:9600",
+		redisAddr: redisaddr,
 
 	}
 
@@ -93,6 +94,12 @@ func (self *Store) restAddress() string {
 
 	return self.restAddr
 }
+
+func (self *Store) hashRedis(clientid string) string {
+	h := util.Strhash(clientid)
+	return self.redisAddr[h % uint32(len(self.redisAddr))]
+}
+
 
 func (self *Store) doCmd(luado *LuaDo, mcmd map[string][]interface{}) map[string]*redis.Reply {
 	fun := "Store.doCmd"
@@ -138,7 +145,7 @@ func (self *Store) rmMsg(cid string, msgid uint64) {
 
 
 	mcmd := make(map[string][]interface{})
-    mcmd["127.0.0.1:9600"] = cmd0
+    mcmd[self.hashRedis(cid)] = cmd0
 
 
 	rp := self.doCmd(self.lua_rmmsg, mcmd)
@@ -162,7 +169,7 @@ func (self *Store) addMsg(cid string, msgid uint64, pb[]byte) string {
 
 
 	mcmd := make(map[string][]interface{})
-    mcmd["127.0.0.1:9600"] = cmd0
+    mcmd[self.hashRedis(cid)] = cmd0
 
 
 	rp := self.doCmd(self.lua_addmsg, mcmd)
@@ -200,7 +207,7 @@ func (self *Store) heart(cli *Client) {
 
 
 	mcmd := make(map[string][]interface{})
-    mcmd["127.0.0.1:9600"] = cmd0
+    mcmd[self.hashRedis(cli.client_id)] = cmd0
 
 
 	rp := self.doCmd(self.lua_heart, mcmd)
@@ -224,7 +231,7 @@ func (self *Store) close(cli *Client) {
 
 
 	mcmd := make(map[string][]interface{})
-    mcmd["127.0.0.1:9600"] = cmd0
+    mcmd[self.hashRedis(cli.client_id)] = cmd0
 
 
 	rp := self.doCmd(self.lua_close, mcmd)
@@ -251,7 +258,7 @@ func (self *Store) syn(cli *Client) (map[uint64][]byte, []uint64) {
 
 
 	mcmd := make(map[string][]interface{})
-    mcmd["127.0.0.1:9600"] = cmd0
+    mcmd[self.hashRedis(cli.client_id)] = cmd0
 
 
 	rp := self.doCmd(self.lua_syn, mcmd)
