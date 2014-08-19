@@ -88,7 +88,9 @@ func (self *Client) sendHEART() {
 	data, _ := proto.Marshal(synack)
 	self.Send(util.Packdata(data))
 
-	ConnStore.heart(self)
+	if self.client_id != "NULL" {
+		ConnStore.heart(self)
+	}
 
 }
 
