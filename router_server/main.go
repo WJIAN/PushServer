@@ -1,10 +1,9 @@
 package main
 
 import (
-//	"fmt"
+	"fmt"
 	"log"
-	"time"
-	"runtime"
+//	"time"
 
 
 	"encoding/json"
@@ -18,28 +17,12 @@ import (
 	"PushServer/router"
 )
 
-func statOut() {
-	ticker := time.NewTicker(time.Second * 10)
-    go func() {
-		for {
-			select {
-			case <-ticker.C:
-				slog.Infof("Stat NumGo:%d NumCgo:%d", runtime.NumGoroutine(), runtime.NumCgoCall())
-			}
-		}
-        //for t := range C {
-        //}
-    }()
 
-}
 
 type config struct {
-	ServId uint32
+	HttpPort int32
 
-	HttpServ string
-	ConnServ string
-
-	Secret string
+	ProxyConf []map[string]string
 
 	LogFile string
 
@@ -82,33 +65,11 @@ func main() {
 	slog.Infof("cfgfile:%s cfg:%s", cfgFile, data)
 	slog.Infoln(cfg)
 
-
-
-
 	// service
-
-	router.StartHttp(cfg.HttpServ)
-
-	statOut()
+	sv := fmt.Sprintf(":%d", cfg.HttpPort)
+	slog.Infoln("start router", sv)
+	router.StartHttp(sv, cfg.ProxyConf)
 
 
 }
 
-// 规整的log
-
-// rediscluster
-// 支持apply, 一次多个命令过去,并统一获得返回
-// rediscluster 增删也采用req的方式进行
-
-// package put in github
-// 调整exported函数
-
-
-
-// Client close show log if not map
-// write once not enough
-
-// num use const config,not direct use
-
-// log level
-// connmanager req/recv/send use one goroutine?

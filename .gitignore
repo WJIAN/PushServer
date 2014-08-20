@@ -6,3 +6,4 @@ router_server/router_server
 push_tst/push_tst.on
 push_loop/p.log
 push_loop/push_loop
+router_server/router.log

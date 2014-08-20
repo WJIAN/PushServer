@@ -159,7 +159,7 @@ Bill Gates当时刚从Seattle Computer Product公司购买了QDOS（从文学效
 		sendTime := time.Now().Format("01-02 15:04:05")
 		var sendData string
 		if c == "301239afbfdfcae2266337b7e2caaaa3" {
-			sendData = fmt.Sprintf("S:%d/D:%s/LR:%s/M:[%s]", v.count, sendTime, v.rvLast, myjoke3)
+			sendData = fmt.Sprintf("S:%d/D:%s/LR:%s/M:[%s]", v.count, sendTime, v.rvLast, joke)
 		} else {
 			sendData = fmt.Sprintf("S:%d/D:%s/LR:%s/M:[%s]", v.count, sendTime, v.rvLast, joke)
 		}
