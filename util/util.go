@@ -3,6 +3,7 @@ package util
 import (
 	"os"
 	"net"
+	"time"
 	"io/ioutil"
 	"encoding/binary"
 	"strings"
@@ -80,3 +81,12 @@ func Strhash(s string) uint32 {
 }
 
 
+var (
+	Since2012 int64 = time.Date(2012, 1, 0, 0, 0, 0, 0, time.UTC).UnixNano() / 1000
+)
+
+
+func Timestamp2012() uint64 {
+	return uint64(time.Now().UnixNano()/1000 - Since2012)
+
+}
