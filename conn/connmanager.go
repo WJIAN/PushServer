@@ -24,6 +24,7 @@ import (
 import (
 	"PushServer/slog"
 	"PushServer/pb"
+	"PushServer/util"
 )
 
 
@@ -215,6 +216,7 @@ func (self *ConnectionManager) Loop(addr string) {
 
 func NewConnectionManager(servId uint32, secret string) *ConnectionManager {
 	//v, err := gosnow.Default()
+	gosnow.Since = util.Since2014 / 1000
 	v, err := gosnow.NewSnowFlake(servId)
 	if err != nil {
 		slog.Panicln("snowflake init error, msgid can not get!")

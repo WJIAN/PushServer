@@ -82,11 +82,11 @@ func Strhash(s string) uint32 {
 
 
 var (
-	Since2012 int64 = time.Date(2012, 1, 0, 0, 0, 0, 0, time.UTC).UnixNano() / 1000
+	Since2014 int64 = time.Date(2014, 1, 1, 0, 0, 0, 0, time.UTC).UnixNano() / 1000
 )
 
 
-func Timestamp2012() uint64 {
-	return uint64(time.Now().UnixNano()/1000 - Since2012)
+func Timestamp2014() uint64 {
+	return uint64(time.Now().UnixNano()/1000 - Since2014)
 
 }

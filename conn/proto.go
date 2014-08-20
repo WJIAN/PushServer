@@ -97,7 +97,7 @@ func (self *Client) sendHEART() {
 func (self *Client) sendBussRetry(msgid uint64, pb []byte) {
 	fun := "Client.sendBussRetry"
 	// 启动发送时间
-	bg := util.Timestamp2012()
+	bg := util.Timestamp2014()
 	ack_notify := make(chan bool)
 
 	if !self.addBussmsg(msgid, ack_notify) {
@@ -121,7 +121,7 @@ func (self *Client) sendBussRetry(msgid uint64, pb []byte) {
 
 			select {
 			case v := <-ack_notify:
-				ed := util.Timestamp2012()
+				ed := util.Timestamp2014()
 				useTm := ed - bg
 				if v {
 					ConnStore.rmMsg(self.client_id, msgid)
@@ -137,7 +137,7 @@ func (self *Client) sendBussRetry(msgid uint64, pb []byte) {
 					self.Send(pb)
 				} else {
 					// 最后一次发送已经超时
-					ed := util.Timestamp2012()
+					ed := util.Timestamp2014()
 					useTm := ed - bg
 
 					slog.Infof("%s client:%s send timeout msgid:%d senduse:%d", fun, self, msgid, useTm)
