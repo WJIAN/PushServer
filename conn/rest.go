@@ -24,8 +24,8 @@ import (
 
 type RestReturn struct {
 	// must Cap, so that can get by json Marshal
-	Code int  `json:"code,"`
-	Err string `json:"err,omitempty"`
+	//Code int  `json:"code,omitempty"`
+	//Err string `json:"err,omitempty"`
 	Msgid uint64 `json:"msgid,omitempty"`
 	Link string `json:"link,omitempty"`
 }
@@ -110,12 +110,13 @@ func debug_show_request(r *http.Request) {
 
 }
 
-
+/*
 func writeRestErr(w http.ResponseWriter, err string) {
 	js, _ := json.Marshal(&RestReturn{Code: 1, Err: err})
 	fmt.Fprintf(w, "%s", js)
 
 }
+*/
 
 func route(w http.ResponseWriter, r *http.Request) {
 	fun := "rest.route"
@@ -150,7 +151,8 @@ func inpush(w http.ResponseWriter, r *http.Request) {
 	fun := "rest.inpush"
 	//debug_show_request(r)
 	if r.Method != "POST" {
-		writeRestErr(w, "method err")
+		//writeRestErr(w, "method err")
+		http.Error(w, "method err", 405)
 		return
 	}
 
@@ -159,7 +161,8 @@ func inpush(w http.ResponseWriter, r *http.Request) {
 	//slog.Info("%q", path)
 
 	if len(path) != 4 {
-		writeRestErr(w, "uri err")
+		//writeRestErr(w, "uri err")
+		http.Error(w, "uri invalid", 400)
 		return
 	}
 
@@ -168,19 +171,23 @@ func inpush(w http.ResponseWriter, r *http.Request) {
 
 	mid, err := strconv.ParseUint(path[3], 10, 64)
 	if err != nil {
-		writeRestErr(w, "msgid err")
+		//writeRestErr(w, "msgid err")
+		http.Error(w, "msgid err", 400)
 		return
 	}
 
 	data, err := ioutil.ReadAll(r.Body);
 	if err != nil {
-		writeRestErr(w, "pb err")
+		//writeRestErr(w, "pb err")
+		er := fmt.Sprintf("body read err:%s", err)
+		http.Error(w, er, 501)
+
 		return
 	}
 
 	msgid, link := ConnManager.sendDirect(clientid, mid, data)
 	slog.Debugf("%s msgid:%d link:%s", fun, msgid, link)
-	js, _ := json.Marshal(&RestReturn{Code: 0, Msgid: msgid, Link: link})
+	js, _ := json.Marshal(&RestReturn{Msgid: msgid, Link: link})
 	fmt.Fprintf(w, "%s", js)
 
 
@@ -193,7 +200,8 @@ func push(w http.ResponseWriter, r *http.Request) {
 	fun := "rest.push"
 	//debug_show_request(r)
 	if r.Method != "POST" {
-		writeRestErr(w, "method err")
+		//writeRestErr(w, "method err")
+		http.Error(w, "method err", 405)
 		return
 	}
 
@@ -202,7 +210,8 @@ func push(w http.ResponseWriter, r *http.Request) {
 	//slog.Info("%q", path)
 
 	if len(path) != 5 {
-		writeRestErr(w, "uri err")
+		//writeRestErr(w, "uri err")
+		http.Error(w, "uri invalid", 400)
 		return
 	}
 
@@ -211,31 +220,36 @@ func push(w http.ResponseWriter, r *http.Request) {
 
 	ziptype, err := strconv.Atoi(path[3])
 	if err != nil {
-		writeRestErr(w, "ziptype err")
+		//writeRestErr(w, "ziptype err")
+		http.Error(w, "ziptype err", 400)
 		return
 	}
 
 	datatype, err := strconv.Atoi(path[4])
 	if err != nil {
-		writeRestErr(w, "datatype err")
+		//writeRestErr(w, "datatype err")
+		http.Error(w, "datatype err", 400)
 		return
 	}
 
 	data, err := ioutil.ReadAll(r.Body);
 	if err != nil {
-		writeRestErr(w, "data err")
+		//writeRestErr(w, "data err")
+		er := fmt.Sprintf("body read err:%s", err)
+		http.Error(w, er, 501)
 		return
 	}
 
 	if len(data) == 0 {
-		writeRestErr(w, "data empty")
+		//writeRestErr(w, "data empty")
+		http.Error(w, "data empty", 400)
 		return
 	}
 
 
 	msgid, link := ConnManager.Send(clientid, int32(ziptype), int32(datatype), data)
 	slog.Debugf("%s msgid:%d link:%s", fun, msgid, link)
-	js, _ := json.Marshal(&RestReturn{Code: 0, Msgid: msgid, Link: link})
+	js, _ := json.Marshal(&RestReturn{Msgid: msgid, Link: link})
 	fmt.Fprintf(w, "%s", js)
 
 
@@ -248,8 +262,8 @@ func setoffline(w http.ResponseWriter, r *http.Request) {
 	slog.Infof("%s %s", fun, r.URL.Path)
 
 	ConnManager.setOffline()
-	js, _ := json.Marshal(&RestReturn{Code: 0})
-	fmt.Fprintf(w, "%s", js)
+	//js, _ := json.Marshal(&RestReturn{Code: 0})
+	//fmt.Fprintf(w, "%s", js)
 
 }
 
