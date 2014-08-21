@@ -93,7 +93,8 @@ func packtst(conn net.Conn, len int, pad byte) {
 
 
 func connect() (net.Conn, error) {
-	return net.Dial("tcp", "127.0.0.1:9988")
+	//return net.Dial("tcp", "127.0.0.1:9988")
+	return net.Dial("tcp", os.Args[1])
 	//return net.Dial("tcp", "42.120.4.112:9988")
 
 }
