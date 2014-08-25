@@ -2,6 +2,7 @@ package connection
 
 import (
     "fmt"
+    "time"
     "net/http"
     "strings"
     "bytes"
@@ -30,6 +31,106 @@ type RestReturn struct {
 	Link string `json:"link,omitempty"`
 }
 
+
+var routerHost []string
+func SetRouterHost(rh []string) {
+	routerHost = rh
+}
+
+func DorestSublinker(linker string, cfg []byte) {
+	for _, h := range(routerHost) {
+		restSublinker(h, linker, cfg)
+	}
+
+}
+
+func DorestDellinker(linker string) {
+	for _, h := range(routerHost) {
+		restDellinker(h, linker)
+	}
+
+}
+
+
+func restSublinker(rh string, linker string, cfg []byte) {
+	fun := "restSublinker"
+	slog.Infof("%s linker:%s cfg:%s", fun, linker, cfg)
+
+	client := &http.Client{Timeout: time.Second * time.Duration(1)}
+	url := fmt.Sprintf("http://%s/sublinker/%s", rh, linker)
+	reqest, err := http.NewRequest("POST", url, bytes.NewReader(cfg))
+	if err != nil {
+		slog.Errorf("%s linker:%s cfg:%s newreq err:%s", fun, linker, cfg, err)
+		return
+	}
+
+	reqest.Header.Set("Connection","Keep-Alive")
+
+	response, err := client.Do(reqest)
+	if err != nil {
+		slog.Errorf("%s linker:%s cfg:%s do err:%s", fun, linker, cfg, err)
+		return
+	}
+
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		slog.Errorf("%s read err %s", fun, err)
+		return
+	}
+
+	if response.StatusCode == 200 {
+		slog.Infof("%s return %s", fun, body)
+
+	} else {
+		slog.Errorf("%s code:%d %s", fun, response.StatusCode, body)
+
+	}
+
+}
+
+
+func restDellinker(rh string, linker string) {
+	fun := "restDellinker"
+	slog.Infof("%s linker:%s", fun, linker)
+
+	client := &http.Client{Timeout: time.Second * time.Duration(1)}
+	url := fmt.Sprintf("http://%s/sublinker/%s", rh, linker)
+	reqest, err := http.NewRequest("DELETE", url, nil)
+
+	if err != nil {
+		slog.Infof("%s linker:%s newreq err:%s", fun, linker, err)
+		return
+	}
+
+
+	reqest.Header.Set("Connection","Keep-Alive")
+
+	response, err := client.Do(reqest)
+	if err != nil {
+		slog.Errorf("%s linker:%s do err:%s", fun, linker, err)
+		return
+	}
+
+
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		slog.Errorf("%s read err %s", fun, err)
+		return
+	}
+
+	if response.StatusCode == 200 {
+
+		slog.Infof("%s return %s", fun, body)
+
+	} else {
+		slog.Errorf("%s code:%d %s", fun, response.StatusCode, body)
+
+	}
+
+}
+
+
+
 func inpushRest(restaddr string, clientid string, msgid uint64, sendData []byte) (uint64, string) {
 	fun := "rest.inpushRest"
 	client := &http.Client{}
@@ -38,7 +139,8 @@ func inpushRest(restaddr string, clientid string, msgid uint64, sendData []byte)
 
 	reqest.Header.Set("Connection","Keep-Alive")
 
-	response,_ := client.Do(reqest)
+	response, _ := client.Do(reqest)
+
 	if response.StatusCode == 200 {
 		body, err := ioutil.ReadAll(response.Body)
 		if err != nil {

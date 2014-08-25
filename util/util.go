@@ -48,7 +48,7 @@ func GetFile(cfgFile string) ([]byte, error){
 	return data, err
 }
 
-func GetLocalIp() (string, error) {
+func GetInterIp() (string, error) {
 	addrs, err := net.InterfaceAddrs()
 	if err != nil {
 		return "", err
@@ -72,6 +72,47 @@ func GetLocalIp() (string, error) {
 
 	return "", errors.New("no inter ip")
 }
+
+func GetLocalIp() (string, error) {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return "", err
+	}
+
+
+	for _, addr := range addrs {
+		//fmt.Printf("Inter %v\n", addr)
+		ip := addr.String()
+		if "127." == ip[:4] {
+			return strings.Split(ip, "/")[0], nil
+		}
+
+	}
+
+	return "", errors.New("no local ip")
+}
+
+
+
+func GetExterIp() (string, error) {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return "", err
+	}
+
+
+	for _, addr := range addrs {
+		//fmt.Printf("Inter %v\n", addr)
+		ip := addr.String()
+		if "10." != ip[:3] && "172." != ip[:4] && "196." != ip[:4] && "127." != ip[:4] {
+			return strings.Split(ip, "/")[0], nil
+		}
+
+	}
+
+	return "", errors.New("no exter ip")
+}
+
 
 
 func Strhash(s string) uint32 {

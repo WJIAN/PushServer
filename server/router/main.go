@@ -22,8 +22,6 @@ import (
 type config struct {
 	HttpPort int32
 
-	ProxyConf []map[string]string
-
 	LogFile string
 
 }
@@ -59,7 +57,7 @@ func main() {
 	// service
 	sv := fmt.Sprintf(":%d", cfg.HttpPort)
 	slog.Infoln("start router", sv)
-	router.StartHttp(sv, cfg.ProxyConf)
+	router.StartHttp(sv)
 
 
 }

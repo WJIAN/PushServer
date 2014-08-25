@@ -3,9 +3,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"time"
-	"runtime"
-
 
 	"encoding/json"
 	"os"
@@ -18,30 +15,13 @@ import (
 	"PushServer/conn"
 )
 
-func statOut() {
-	ticker := time.NewTicker(time.Second * 10)
-    go func() {
-		for {
-			select {
-			case <-ticker.C:
-				slog.Infof("Stat NumGo:%d NumCgo:%d NumConn:%d",
-					runtime.NumGoroutine(),
-					runtime.NumCgoCall(),
-					connection.ConnManager.NumConn(),
-				)
-			}
-		}
-        //for t := range C {
-        //}
-    }()
-
-}
 
 type config struct {
 	ServId uint32
 
 	HttpPort int32
 	ConnPort int32
+	Heart int32
 
 	Secret string
 
@@ -49,6 +29,8 @@ type config struct {
 	LuaPath string
 
 	RedisAddr []string
+
+	RouterHost []string
 
 }
 
@@ -80,7 +62,7 @@ func main() {
 
 
 	// service
-	interIp, err := util.GetLocalIp()
+	interIp, err := util.GetInterIp()
 	if err != nil {
 		slog.Panicln("get local ip error")
 	}
@@ -90,11 +72,10 @@ func main() {
 
 	connection.ConnManager = connection.NewConnectionManager(cfg.ServId, cfg.Secret)
 
+	connection.SetRouterHost(cfg.RouterHost)
 	connection.StartHttp(fmt.Sprintf(":%d", cfg.HttpPort))
 
-	statOut()
-
-	connection.ConnManager.Loop(fmt.Sprintf(":%d", cfg.ConnPort))
+	connection.ConnManager.Loop(fmt.Sprintf(":%d", cfg.ConnPort), cfg.Heart)
 
 }
 

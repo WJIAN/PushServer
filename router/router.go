@@ -2,6 +2,8 @@ package router
 
 import (
     "fmt"
+    "io/ioutil"
+    "time"
     "net/http"
     "strings"
 //    "log"
@@ -26,6 +28,29 @@ type RestReturn struct {
 	Err string `json:"err,omitempty"`
 	Msgid uint64 `json:"msgid,omitempty"`
 	Link string `json:"link,omitempty"`
+}
+
+type linkerConf struct {
+	stamp int64
+	//config map[string]string
+	config []byte
+}
+
+var (
+	linkerTable map[string]*linkerConf = make(map[string]*linkerConf)
+)
+
+func isInterReq(r *http.Request) bool {
+	hdr := r.Header
+	hdrRealIp := hdr.Get("X-Real-Ip")
+	hdrForwardedFor := hdr.Get("X-Forwarded-For")
+
+	if hdrRealIp == "" && hdrForwardedFor == "" {
+		return true
+	} else {
+		return false
+	}
+
 }
 
 // Request.RemoteAddress contains port, which we want to remove i.e.:
@@ -71,18 +96,90 @@ func route(w http.ResponseWriter, r *http.Request) {
 	slog.Infof("%s path:%s rm:%s", fun, r.URL.Path, remoteip)
 
 
+	lcl := make([]*linkerConf, 0)
+	now := time.Now().Unix()
+	for k,v := range(linkerTable) {
+		slog.Infof("%s stamp:%d conf:%s", k, v.stamp, v.config)
+		if now - v.stamp > 70 {
+			slog.Warnf("%s timeout stamp:%d conf:%s", k, v.stamp, v.config)
+			delete(linkerTable, k)
+		} else {
+			lcl = append(lcl, v)
+		}
 
+	}
+
+	if len(lcl) == 0 {
+		http.Error(w, "linker not found", 501)
+		return
+	}
 
 
 	h := util.Strhash(remoteip)
 
-	cf := ProxyConfig[h % uint32(len(ProxyConfig))]
+	cf := lcl[h % uint32(len(lcl))]
 
-	js, _ := json.Marshal(cf)
-	fmt.Fprintf(w, "%s", js)
+	//js, _ := json.Marshal(cf)
+	fmt.Fprintf(w, "%s", cf.config)
 
 
 }
+
+
+// POST /sublinker/LINKER
+// DELETE
+func sublinker(w http.ResponseWriter, r *http.Request) {
+	fun := "rest.route"
+
+	if !isInterReq(r) {
+		http.Error(w, "", 403)
+		return
+	}
+
+	slog.Infof("%s path:%s method:%s", fun, r.URL.Path, r.Method)
+
+	if r.Method != "POST" && r.Method != "DELETE" {
+		http.Error(w, "method err", 405)
+		return
+	}
+
+
+
+
+	path := strings.Split(r.URL.Path, "/")
+	if len(path) != 3 {
+		http.Error(w, "uri invalid", 400)
+		return
+	}
+	lk := path[2]
+
+	if r.Method == "DELETE" {
+		delete(linkerTable, lk)
+		return
+	}
+
+
+	data, err := ioutil.ReadAll(r.Body);
+	if err != nil {
+		er := fmt.Sprintf("body read err:%s", err)
+		http.Error(w, er, 501)
+		return
+	}
+
+	if len(data) == 0 {
+		http.Error(w, "data empty", 400)
+		return
+	}
+
+
+	linkerTable[lk] = &linkerConf{
+		stamp: time.Now().Unix(),
+		config: data,
+	}
+
+
+}
+
 
 
 // 获取外网ip，返回非200的code
@@ -114,12 +211,14 @@ func installid(w http.ResponseWriter, r *http.Request) {
 }
 
 
-var ProxyConfig []map[string]string
-func StartHttp(httpport string, pc []map[string]string) {
+
+func StartHttp(httpport string) {
 	http.HandleFunc("/route", route)
 	http.HandleFunc("/installid/", installid)
 
-	ProxyConfig = pc
+
+	http.HandleFunc("/sublinker/", sublinker)
+
 	err := http.ListenAndServe(httpport, nil) //设置监听的端口
 	if err != nil {
 		slog.Panicf("StartHttp ListenAndServe: %s", err)
