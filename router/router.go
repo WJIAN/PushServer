@@ -28,17 +28,53 @@ type RestReturn struct {
 	Link string `json:"link,omitempty"`
 }
 
+// Request.RemoteAddress contains port, which we want to remove i.e.:
+// "[::1]:58292" => "[::1]"
+func ipAddrFromRemoteAddr(s string) string {
+	idx := strings.LastIndex(s, ":")
+	if idx == -1 {
+		return s
+	}
+	return s[:idx]
+}
+
+func getIpAddress(r *http.Request) string {
+	fun := "getIpAddress"
+	hdr := r.Header
+	hdrRealIp := hdr.Get("X-Real-Ip")
+	hdrForwardedFor := hdr.Get("X-Forwarded-For")
+
+	slog.Infof("%s X-Real-Ip:%s X-Forwarded-For:%s remoteadd:%s", fun, hdrRealIp, hdrForwardedFor, r.RemoteAddr)
+
+	if hdrRealIp == "" && hdrForwardedFor == "" {
+		return ipAddrFromRemoteAddr(r.RemoteAddr)
+	}
+	if hdrForwardedFor != "" {
+		// X-Forwarded-For is potentially a list of addresses separated with ","
+		parts := strings.Split(hdrForwardedFor, ",")
+		for i, p := range parts {
+			parts[i] = strings.TrimSpace(p)
+		}
+		// TODO: should return first non-local address
+		return parts[0]
+	}
+	return hdrRealIp
+}
 
 
 func route(w http.ResponseWriter, r *http.Request) {
 	fun := "rest.route"
-	slog.Infof("%s path:%s rm:%s", fun, r.URL.Path, r.RemoteAddr)
+
+	//remoteip := strings.Split(r.RemoteAddr, ":")
+	remoteip := getIpAddress(r)
+
+	slog.Infof("%s path:%s rm:%s", fun, r.URL.Path, remoteip)
 
 
 
-	remoteip := strings.Split(r.RemoteAddr, ":")
 
-	h := util.Strhash(remoteip[0])
+
+	h := util.Strhash(remoteip)
 
 	cf := ProxyConfig[h % uint32(len(ProxyConfig))]
 
