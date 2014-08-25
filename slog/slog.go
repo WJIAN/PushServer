@@ -1,30 +1,92 @@
 package slog
 
+// 暂时没有加锁，注意只能在GOPROC == 1的情况下使用
+
 import (
 	"log"
-	"io"
+//	"io"
+	"os"
+	"time"
+	"fmt"
 
 )
 
 type logger struct {
+	logpref string
+
+	loghour string
+	logfp *os.File
 	per *log.Logger
 
 }
 
+func (self *logger) setOutput() {
+	hour := time.Now().Format("2006-01-02-15")
+	//log.Println("setoutput", hour)
+	if self.logpref == "" && self.loghour == "" {
+		self.per = log.New(os.Stdout, "", log.Ldate|log.Ltime)
+		self.loghour = hour
+		//log.Println("setoutput", "std", hour)
+	}
+
+	if self.logpref != "" && self.loghour != hour {
+		logFile := fmt.Sprintf("%s.%s.log", self.logpref, hour)
+		logf, err := os.OpenFile(logFile, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
+		if err != nil {
+			log.Fatalln(err)
+			return
+		}
+
+		//log.Println("setoutput", "pref", self.logpref, hour)
+
+		self.per = log.New(logf, "", log.Ldate|log.Ltime)
+		if self.logfp != nil {
+			self.logfp.Close()
+		}
+		self.logfp = logf
+		self.loghour = hour
+	}
+
+
+}
+
 func (self *logger) Printf(format string, v ...interface{}) {
+	self.setOutput()
+	if self.per == nil {
+		log.Fatalln("slog nil")
+		return
+	}
 	self.per.Printf(format, v...)
 }
 
 func (self *logger) Panicf(format string, v ...interface{}) {
+	self.setOutput()
+	if self.per == nil {
+		log.Fatalln("slog nil")
+		return
+	}
+
 	self.per.Panicf(format, v...)
 }
 
 
 func (self *logger) Println(v ...interface{}) {
+	self.setOutput()
+	if self.per == nil {
+		log.Fatalln("slog nil")
+		return
+	}
+
 	self.per.Println(v...)
 }
 
 func (self *logger) Panicln(v ...interface{}) {
+	self.setOutput()
+	if self.per == nil {
+		log.Fatalln("slog nil")
+		return
+	}
+
 	self.per.Panicln(v...)
 }
 
@@ -35,8 +97,8 @@ var (
 	lg *logger
 )
 
-func Init(w io.Writer) {
-    lg = &logger{per: log.New(w, "", log.Ldate|log.Ltime)}
+func Init(pref string) {
+    lg = &logger{logpref: pref, logfp: nil, per: nil}
 
 }
 
