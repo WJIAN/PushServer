@@ -38,6 +38,7 @@ type linkerConf struct {
 
 var (
 	linkerTable map[string]*linkerConf = make(map[string]*linkerConf)
+	linkerList []*linkerConf = make([]*linkerConf, 0)
 )
 
 func isInterReq(r *http.Request) bool {
@@ -87,6 +88,29 @@ func getIpAddress(r *http.Request) string {
 }
 
 
+func linkerCheck() {
+	fun := "linkerCheck"
+	linkertmp := make([]*linkerConf, 0)
+	now := time.Now().Unix()
+	slog.Infof("%s begin %d len %d", fun, now, len(linkerList))
+	for k,v := range(linkerTable) {
+		slog.Infof("%s %s stamp:%d conf:%s", fun, k, v.stamp, v.config)
+		if now - v.stamp > 70 {
+			slog.Warnf("%s %s timeout stamp:%d conf:%s", fun, k, v.stamp, v.config)
+			delete(linkerTable, k)
+		} else {
+			linkertmp = append(linkertmp, v)
+		}
+
+	}
+
+	linkerList = linkertmp
+	slog.Infof("%s end len %d", fun, len(linkerList))
+
+
+}
+
+
 func route(w http.ResponseWriter, r *http.Request) {
 	fun := "rest.route"
 
@@ -96,20 +120,7 @@ func route(w http.ResponseWriter, r *http.Request) {
 	slog.Infof("%s path:%s rm:%s", fun, r.URL.Path, remoteip)
 
 
-	lcl := make([]*linkerConf, 0)
-	now := time.Now().Unix()
-	for k,v := range(linkerTable) {
-		slog.Infof("%s stamp:%d conf:%s", k, v.stamp, v.config)
-		if now - v.stamp > 70 {
-			slog.Warnf("%s timeout stamp:%d conf:%s", k, v.stamp, v.config)
-			delete(linkerTable, k)
-		} else {
-			lcl = append(lcl, v)
-		}
-
-	}
-
-	if len(lcl) == 0 {
+	if len(linkerList) == 0 {
 		http.Error(w, "linker not found", 501)
 		return
 	}
@@ -117,7 +128,7 @@ func route(w http.ResponseWriter, r *http.Request) {
 
 	h := util.Strhash(remoteip)
 
-	cf := lcl[h % uint32(len(lcl))]
+	cf := linkerList[h % uint32(len(linkerList))]
 
 	//js, _ := json.Marshal(cf)
 	fmt.Fprintf(w, "%s", cf.config)
@@ -213,6 +224,19 @@ func installid(w http.ResponseWriter, r *http.Request) {
 
 
 func StartHttp(httpport string) {
+	ticker := time.NewTicker(time.Second * 10)
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				linkerCheck()
+			}
+		}
+    }()
+
+
+
+
 	http.HandleFunc("/route", route)
 	http.HandleFunc("/installid/", installid)
 
