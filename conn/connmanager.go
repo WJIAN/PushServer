@@ -150,6 +150,8 @@ func (self *ConnectionManager) Send(client_id string, ziptype int32, datatype in
 		//return inpushRest(restaddr, client_id, msgid, spb)
 
 	} else {
+		// 连接不在本服务，需要转发到其他服务器推送
+		slog.Infof("%s restTrans cid:%s addr:%s", fun, client_id, restaddr)
 		return inpushRest(restaddr, client_id, msgid, spb)
 
 	}
