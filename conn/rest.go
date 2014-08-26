@@ -227,8 +227,8 @@ func route(w http.ResponseWriter, r *http.Request) {
 	fun := "rest.route"
 	slog.Infof("%s %s", fun, r.URL.Path)
 
-	js, _ := json.Marshal(&map[string]string{"heart": "300", "ip": "42.120.4.112", "port":"9988"})
-	fmt.Fprintf(w, "%s", js)
+	//js, _ := json.Marshal(&map[string]string{"heart": "300", "ip": "42.120.4.112", "port":"9988"})
+	fmt.Fprintf(w, "%s", ConnManager.LinkerConfig())
 
 
 }
