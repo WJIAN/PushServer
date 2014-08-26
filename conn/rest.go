@@ -135,7 +135,11 @@ func inpushRest(restaddr string, clientid string, msgid uint64, sendData []byte)
 	fun := "rest.inpushRest"
 	client := &http.Client{}
 	url := fmt.Sprintf("http://%s/inpush/%s/%d", restaddr, clientid, msgid)
-	reqest, _ := http.NewRequest("POST", url, bytes.NewReader(sendData))
+	reqest, err := http.NewRequest("POST", url, bytes.NewReader(sendData))
+	if err != nil {
+		return msgid, "TMPCLOSED"
+	}
+
 
 	reqest.Header.Set("Connection","Keep-Alive")
 
