@@ -33,7 +33,7 @@ func (self *logger) setOutput() {
 		logFile := fmt.Sprintf("%s.%s.log", self.logpref, hour)
 		logf, err := os.OpenFile(logFile, os.O_RDWR | os.O_CREATE | os.O_APPEND, 0666)
 		if err != nil {
-			log.Fatalln(err)
+			log.Println(err)
 			return
 		}
 
@@ -53,7 +53,7 @@ func (self *logger) setOutput() {
 func (self *logger) Printf(format string, v ...interface{}) {
 	self.setOutput()
 	if self.per == nil {
-		log.Fatalln("slog nil")
+		log.Println("slog nil")
 		return
 	}
 	self.per.Printf(format, v...)
@@ -62,7 +62,7 @@ func (self *logger) Printf(format string, v ...interface{}) {
 func (self *logger) Panicf(format string, v ...interface{}) {
 	self.setOutput()
 	if self.per == nil {
-		log.Fatalln("slog nil")
+		log.Println("slog nil")
 		return
 	}
 
@@ -73,7 +73,7 @@ func (self *logger) Panicf(format string, v ...interface{}) {
 func (self *logger) Println(v ...interface{}) {
 	self.setOutput()
 	if self.per == nil {
-		log.Fatalln("slog nil")
+		log.Println("slog nil")
 		return
 	}
 
@@ -83,7 +83,7 @@ func (self *logger) Println(v ...interface{}) {
 func (self *logger) Panicln(v ...interface{}) {
 	self.setOutput()
 	if self.per == nil {
-		log.Fatalln("slog nil")
+		log.Println("slog nil")
 		return
 	}
 
