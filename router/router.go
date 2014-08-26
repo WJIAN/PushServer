@@ -6,6 +6,7 @@ import (
     "time"
     "net/http"
     "strings"
+	"sort"
 //    "log"
 //	"io/ioutil"
 	"encoding/json"
@@ -87,10 +88,22 @@ func getIpAddress(r *http.Request) string {
 	return hdrRealIp
 }
 
+type ByString []string
+
+func (s ByString) Len() int {
+    return len(s)
+}
+
+func (s ByString) Swap(i, j int) {
+    s[i], s[j] = s[j], s[i]
+}
+func (s ByString) Less(i, j int) bool {
+    return s[i] < s[j]
+}
 
 func linkerCheck() {
 	fun := "linkerCheck"
-	linkertmp := make([]*linkerConf, 0)
+	linkerkey := make([]string, 0)
 	now := time.Now().Unix()
 	slog.Infof("%s begin %d len %d", fun, now, len(linkerList))
 	for k,v := range(linkerTable) {
@@ -99,10 +112,19 @@ func linkerCheck() {
 			slog.Warnf("%s %s timeout stamp:%d conf:%s", fun, k, v.stamp, v.config)
 			delete(linkerTable, k)
 		} else {
-			linkertmp = append(linkertmp, v)
+			linkerkey = append(linkerkey, k)
 		}
 
 	}
+
+
+	sort.Sort(ByString(linkerkey))
+
+	linkertmp := make([]*linkerConf, 0)
+	for _, k := range(linkerkey) {
+		linkertmp = append(linkertmp, linkerTable[k])
+	}
+
 
 	linkerList = linkertmp
 	slog.Infof("%s end len %d", fun, len(linkerList))
