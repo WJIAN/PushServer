@@ -9,6 +9,8 @@ import (
 	"strings"
 	"errors"
 	"hash/fnv"
+
+	"fmt"
 )
 
 
@@ -129,5 +131,76 @@ var (
 
 func Timestamp2014() uint64 {
 	return uint64(time.Now().UnixNano()/1000 - Since2014)
+
+}
+
+func PackageSplit(conn net.Conn, readCall func([]byte)) (bool, error) {
+	//fun := "packSplit"
+	buffer := make([]byte, 2048)
+	packBuff := make([]byte, 0)
+	var bufLen uint64 = 0
+
+	for {
+		conn.SetReadDeadline(time.Now().Add(time.Duration(60 * 10) * time.Second))
+		bytesRead, error := conn.Read(buffer)
+		if error != nil {
+			//slog.Infof("%s client:%s conn error: %s", fun, self, error)
+			return true, error
+		}
+
+
+
+		packBuff = append(packBuff, buffer[:bytesRead]...)
+		bufLen += uint64(bytesRead)
+
+
+	    //slog.Infof("%s client:%s Recv: %d %d %d", fun, self, bytesRead, packBuff, bufLen)
+
+		for {
+			if (bufLen > 0) {
+			    pacLen, sz := binary.Uvarint(packBuff[:bufLen])
+				if sz < 0 {
+					//slog.Warnf("%s client:%s package head error:%s", fun, self, packBuff[:bufLen])
+					return false, errors.New(fmt.Sprintf("package head error var:%s", packBuff[:bufLen]))
+				} else if sz == 0 {
+				    break
+				}
+
+				//slog.Debugf("%s client:%s pacLen %d", fun, self, pacLen)
+				// must < 5K
+				if pacLen > 1024 * 5 {
+					//slog.Warnf("%s client:%s package too long error:%s", fun, self, packBuff[:bufLen])
+					return false, errors.New("package too long")
+				} else if pacLen == 0 {
+					return false, errors.New("package len 0")
+
+				}
+
+				apacLen := uint64(sz)+pacLen+1
+				if bufLen >= apacLen {
+				    pad := packBuff[apacLen-1]
+					if pad != 0 {
+						//slog.Warnf("%s client:%s package pad error:%s", fun, self, packBuff[:bufLen])
+						return false, errors.New("package pad error")
+					}
+				    //self.proto(packBuff[sz:apacLen-1])
+					readCall(packBuff[sz:apacLen-1])
+					packBuff = packBuff[apacLen:]
+					bufLen -= apacLen
+				} else {
+					break
+				}
+
+			} else {
+				break
+
+			}
+
+		}
+
+	}
+
+	return false, errors.New("unknown err")
+
 
 }

@@ -10,7 +10,7 @@ import (
 	"net"
 	//"reflect"
 	"time"
-	"encoding/binary"
+//	"encoding/binary"
 	//"crypto/sha1"
 	"crypto/md5"
 	"sync"
@@ -23,6 +23,7 @@ import (
 
 // my lib
 import (
+	"PushServer/util"
 	"PushServer/pb"
 	"PushServer/slog"
 
@@ -302,14 +303,24 @@ func (self *Client) sendData(s []byte, isclose bool) {
 // goroutine
 func (self *Client) Recv() {
 	fun := "Client.Recv"
+/*
 	buffer := make([]byte, 2048)
 	packBuff := make([]byte, 0)
 	var bufLen uint64 = 0
-
 	conn := self.conn
+*/
 	errmsg := ""
 	defer self.deferErrNotifyCLOSED(&errmsg)
 
+
+	isclose, err := util.PackageSplit(self.conn, self.proto)
+	if err != nil {
+		slog.Warnf("%s client:%s packageSplit isclose:%t error: %s", fun, self, isclose, err)
+		if !isclose {
+			errmsg = err.Error()
+		}
+	}
+/*
 	for {
 		conn.SetReadDeadline(time.Now().Add(time.Duration(60 * 10) * time.Second))
 		bytesRead, error := conn.Read(buffer)
@@ -370,6 +381,7 @@ func (self *Client) Recv() {
 		}
 
 	}
+*/
 
 }
 
