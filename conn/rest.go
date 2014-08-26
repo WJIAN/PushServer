@@ -139,15 +139,18 @@ func inpushRest(restaddr string, clientid string, msgid uint64, sendData []byte)
 
 	reqest.Header.Set("Connection","Keep-Alive")
 
-	response, _ := client.Do(reqest)
+	response, err := client.Do(reqest)
+	if err != nil {
+		return msgid, "TMPCLOSED"
+	}
+
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		slog.Errorf("%s cid:%s Push %d return ERROR %s", fun, clientid, msgid, err)
+		return msgid, "TMPCLOSED"
+	}
 
 	if response.StatusCode == 200 {
-		body, err := ioutil.ReadAll(response.Body)
-		if err != nil {
-			slog.Errorf("%s cid:%s Push %d return ERROR %s", fun, clientid, msgid, err)
-			return msgid, "TMPCLOSED"
-		}
-
 		var rr RestReturn
 		json.Unmarshal(body, &rr)
 
@@ -161,7 +164,7 @@ func inpushRest(restaddr string, clientid string, msgid uint64, sendData []byte)
 
 
 	} else {
-		slog.Errorf("%s cid:%s Push error %d", fun, clientid, msgid)
+		slog.Errorf("%s cid:%s Push error %d st:%d body %s", fun, clientid, msgid, response.StatusCode, body)
 
 		return msgid, "TMPCLOSED"
 

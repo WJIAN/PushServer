@@ -3,8 +3,8 @@
 package rediscluster
 
 import (
-//	"fmt"
-//	"errors"
+	"fmt"
+	"errors"
 	"github.com/fzzy/radix/redis"
 //	"os"
 	"time"
@@ -77,7 +77,9 @@ func (self *RedisPool) Cmd(multi_args map[string][]interface{}) map[string]*redi
 	for k, v := range multi_args {
 		c, err := self.getConn(k)
 		if err != nil {
-			slog.Infof("get conn addr:%s err:%s", k, err)
+			es := fmt.Sprintf("get conn addr:%s err:%s", k, err)
+			slog.Infof(es)
+			rv[k] = &redis.Reply{Type: redis.ErrorReply, Err:errors.New(es)}
 			continue
 		}
 

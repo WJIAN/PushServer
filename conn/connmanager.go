@@ -135,7 +135,7 @@ func (self *ConnectionManager) Send(client_id string, ziptype int32, datatype in
 	restaddr := ConnStore.addMsg(client_id, msgid, spb)
 	//slog.Tracef("%s restaddr:%s", fun, restaddr)
 	slog.Infof("%s restApi cid:%s addr:%s", fun, client_id, restaddr)
-	if restaddr == "NOTFOUND" {
+	if restaddr == "NOTFOUND" || restaddr == "ERRACCESS" {
 		// 错误的clientid，或者用户可能超多一周没有建立过连接
 		return 0, restaddr
 

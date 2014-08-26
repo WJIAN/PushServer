@@ -181,7 +181,7 @@ func (self *Store) addMsg(cid string, msgid uint64, pb[]byte) string {
 		rvs, err := r.Str()
 		if err != nil {
 			slog.Errorf("%s err:%s", fun, err)
-			break
+			return "ERRACCESS"
 		} else {
 			return rvs
 		}
