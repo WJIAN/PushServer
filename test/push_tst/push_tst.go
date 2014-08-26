@@ -576,7 +576,7 @@ func tstBussinessSend(ackDelay int) {
 // 多连接建立推送
 
 func main() {
-    slog.Init(os.Stdout)
+    slog.Init("")
 
 /*
 	tstErrpad()
