@@ -278,12 +278,7 @@ func (self *Client) sendData(s []byte, isclose bool) {
 // goroutine
 func (self *Client) Recv() {
 	fun := "Client.Recv"
-/*
-	buffer := make([]byte, 2048)
-	packBuff := make([]byte, 0)
-	var bufLen uint64 = 0
-	conn := self.conn
-*/
+
 	errmsg := ""
 	defer self.deferErrNotifyCLOSED(&errmsg)
 
@@ -295,68 +290,6 @@ func (self *Client) Recv() {
 			errmsg = err.Error()
 		}
 	}
-/*
-	for {
-		conn.SetReadDeadline(time.Now().Add(time.Duration(60 * 10) * time.Second))
-		bytesRead, error := conn.Read(buffer)
-		if error != nil {
-			slog.Infof("%s client:%s conn error: %s", fun, self, error)
-			return
-		}
-
-
-
-		packBuff = append(packBuff, buffer[:bytesRead]...)
-		bufLen += uint64(bytesRead)
-
-
-	    //slog.Infof("%s client:%s Recv: %d %d %d", fun, self, bytesRead, packBuff, bufLen)
-
-		for {
-			if (bufLen > 0) {
-			    pacLen, sz := binary.Uvarint(packBuff[:bufLen])
-				if sz < 0 {
-					slog.Warnf("%s client:%s package head error:%s", fun, self, packBuff[:bufLen])
-					return
-				} else if sz == 0 {
-				    break
-				}
-
-				//slog.Debugf("%s client:%s pacLen %d", fun, self, pacLen)
-				// must < 5K
-				if pacLen > 1024 * 5 {
-					slog.Warnf("%s client:%s package too long error:%s", fun, self, packBuff[:bufLen])
-					errmsg = "package too long"
-					return
-				} else if pacLen == 0 {
-					errmsg = "package len 0"
-					return
-				} 
-
-				apacLen := uint64(sz)+pacLen+1
-				if bufLen >= apacLen {
-				    pad := packBuff[apacLen-1]
-					if pad != 0 {
-						slog.Warnf("%s client:%s package pad error:%s", fun, self, packBuff[:bufLen])
-						errmsg = "package pad error"
-					    return
-					}
-				    self.proto(packBuff[sz:apacLen-1])
-					packBuff = packBuff[apacLen:]
-					bufLen -= apacLen
-				} else {
-					break
-				}
-
-			} else {
-				break
-
-			}
-
-		}
-
-	}
-*/
 
 }
 
