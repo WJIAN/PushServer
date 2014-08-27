@@ -213,6 +213,7 @@ func (m *userClient) protoAns(data []byte) {
 		m.changeState(State_ESTABLISHED)
 
 	} else if pb_type == pushproto.Talk_BUSSINESS {
+		m.recvBuss(pb.GetZiptype(), pb.GetDatatype(), pb.GetBussdata())
 		m.ack(pb.GetMsgid())
 	}
 
@@ -280,6 +281,13 @@ func (m *userClient) heart() error {
 
 
 }
+
+func (m *userClient) recvBuss(ziptype int32, datatype int32,  data []byte) {
+	fun := "userClient.recvBuss"
+	slog.Infof("%s recv buss zip:%d dtype:%d data:%s", fun, ziptype, datatype, data)
+
+}
+
 
 func (m *userClient) ack(msgid uint64) error {
 	pb := &pushproto.Talk{
