@@ -11,6 +11,7 @@ import (
 	"errors"
 	"encoding/json"
 	"strconv"
+	"sync"
 //	"code.google.com/p/go-uuid/uuid"
 	"code.google.com/p/goprotobuf/proto"
 )
@@ -90,6 +91,8 @@ func (self stateType) String() string {
 
 
 type userClient struct {
+	send_lock sync.Mutex
+
 	powertry uint
 	linkerConf *linkerConfig
 	conn net.Conn
@@ -197,7 +200,7 @@ func (m *userClient) protoAns(data []byte) {
 	err := proto.Unmarshal(data, pb)
 	if err != nil {
 		slog.Errorf("in %s ERROR:unmarshaling connection error:%s", fun, err)
-		m.conn.Close()
+		m.changeState(State_CLOSED)
 	}
 
 	slog.Infof("%s PROTO:%s", fun, pb)
@@ -208,10 +211,10 @@ func (m *userClient) protoAns(data []byte) {
 	if pb_type == pushproto.Talk_SYNACK {
 		m.cid = pb.GetClientid()
 		m.changeState(State_ESTABLISHED)
+
+	} else if pb_type == pushproto.Talk_BUSSINESS {
+		m.ack(pb.GetMsgid())
 	}
-
-
-
 
 
 }
@@ -224,6 +227,12 @@ func (m *userClient) changeState(newstate stateType) {
 		oldstate := m.state
 		m.state = newstate
 
+
+		if m.state == State_CLOSED && m.conn != nil {
+			m.conn.Close()
+		}
+
+
 		if m.state == State_ESTABLISHED {
 			m.powertry = uint(0)
 		}
@@ -234,9 +243,56 @@ func (m *userClient) changeState(newstate stateType) {
 
 }
 
+
+func (m *userClient) send(pb *pushproto.Talk) error {
+	fun := "userClient.send"
+	slog.Infof("%s client:%s msg:%s", fun, m, pb)
+
+	data, err := proto.Marshal(pb)
+	if err != nil {
+		return err
+	}
+
+
+	sb := util.Packdata(data)
+
+	m.send_lock.Lock()
+	defer m.send_lock.Unlock()
+
+	m.conn.SetWriteDeadline(time.Now().Add(time.Duration(5) * time.Second))
+	ln, err := m.conn.Write(sb)
+	if ln != len(sb) || err != nil {
+		return errors.New(fmt.Sprintf("send error:%s", err))
+	}
+
+	//return errors.New("test")
+	return nil
+
+
+}
+
+func (m *userClient) heart() error {
+	pb := &pushproto.Talk{
+		Type: pushproto.Talk_HEART.Enum(),
+	}
+
+	return m.send(pb)
+
+
+}
+
+func (m *userClient) ack(msgid uint64) error {
+	pb := &pushproto.Talk{
+		Type: pushproto.Talk_ACK.Enum(),
+		Ackmsgid: proto.Uint64(msgid),
+	}
+	return m.send(pb)
+}
+
+
 func (m *userClient) syn() error {
 
-	syn := &pushproto.Talk{
+	pb := &pushproto.Talk{
 		Type: pushproto.Talk_SYN.Enum(),
 		Appid: proto.String("shawn"),
 		Installid: proto.String("1cf52f542ec2f6d1e96879bd6f5243da3baa42e4"),
@@ -246,21 +302,35 @@ func (m *userClient) syn() error {
 
 	}
 
+	return m.send(pb)
+}
 
-	data, err := proto.Marshal(syn)
-	if err != nil {
-		return err
-	}
+func (m *userClient) doheart() {
+	fun := "userClient.doheart"
 
-	sb := util.Packdata(data)
+	ticker := time.NewTicker(time.Second * time.Duration(m.linkerConf.heart))
+	//ticker := time.NewTicker(time.Second * time.Duration(5))
+	// 当前心跳的4-tuple，防止一个连接启动了多个heartbeat
+	curtuple4 := m.tuple4
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				if curtuple4 != m.tuple4 {
+					slog.Infof("%s client:%s heart conn change oldtuple4:%s", fun, m, curtuple4)
+					return
+				}
 
-	ln, err := m.conn.Write(sb)
-	if ln != len(sb) || err != nil {
-		return errors.New(fmt.Sprintf("syn send error:%s", err))
-	}
-
-	//return errors.New("test")
-	return nil
+				if m.state == State_ESTABLISHED {
+					if err := m.heart(); err != nil {
+						slog.Errorf("%s client:%s heart err:%s", fun, m, err)
+						m.changeState(State_CLOSED)
+						return
+					}
+				}
+			}
+		}
+    }()
 
 }
 
@@ -271,10 +341,6 @@ func (m *userClient) power() {
 	fun := "userClient.power"
 	trytimeceil := uint(6)
 	for {
-		if m.conn != nil {
-			m.conn.Close()
-		}
-
 		m.changeState(State_CLOSED)
 
 		slog.Infof("%s linker conn try:%d", fun, m.powertry)
@@ -311,8 +377,10 @@ func (m *userClient) power() {
 
 		m.changeState(State_SYN_SEND)
 
+		m.doheart()
+
 		// hold here
-		isclose, err := util.PackageSplit(conn, m.protoAns)
+		isclose, err := util.PackageSplit(conn, 8*60, m.protoAns)
 		if err != nil {
 			slog.Errorf("%s conn read err:%s isclose:%t", fun, err, isclose)
 		}

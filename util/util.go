@@ -134,14 +134,14 @@ func Timestamp2014() uint64 {
 
 }
 
-func PackageSplit(conn net.Conn, readCall func([]byte)) (bool, error) {
+func PackageSplit(conn net.Conn, readtimeout int, readCall func([]byte)) (bool, error) {
 	//fun := "packSplit"
 	buffer := make([]byte, 2048)
 	packBuff := make([]byte, 0)
 	var bufLen uint64 = 0
 
 	for {
-		conn.SetReadDeadline(time.Now().Add(time.Duration(60 * 10) * time.Second))
+		conn.SetReadDeadline(time.Now().Add(time.Duration(readtimeout) * time.Second))
 		bytesRead, error := conn.Read(buffer)
 		if error != nil {
 			//slog.Infof("%s client:%s conn error: %s", fun, self, error)
