@@ -69,8 +69,11 @@ func (self *Client) String() string {
 
 func NewClient(m *ConnectionManager, c net.Conn) *Client {
 	var cli *Client = &Client {
-		state: State_CLOSED,
+		state: State_INIT,
 	}
+
+	// change to State_CLOSED
+	cli.state = State_CLOSED
 
 	cli.chgCLOSED2TCP_READY(c)
 
@@ -91,6 +94,7 @@ func (self *Client) chgCLOSED2TCP_READY(c net.Conn) {
 
 	self.appid = ""
 	self.installid = ""
+	self.nettype = ""
 	self.client_id = "NULL"
 	self.conn = c
 	self.remoteaddr = fmt.Sprintf("%s-%s", self.conn.LocalAddr().String(), self.conn.RemoteAddr().String())
@@ -133,11 +137,13 @@ func (self *Client) chgESTABLISHED(pb *pushproto.Talk) bool {
 
 
 	old_state := self.state
-	self.state = State_ESTABLISHED
+	self.state = State_SYN_RCVD
 
 	slog.Infof("%s client:%s change %s:%s", fun, self, old_state, self.state)
 
 	self.sendSYNACK(self.client_id)
+
+	self.state = State_ESTABLISHED
 	ConnManager.addClient(self)
 	return true
 
