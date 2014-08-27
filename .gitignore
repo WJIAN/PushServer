@@ -13,3 +13,6 @@ server/linker/push.conf
 server/router/router
 server/router/router.conf
 server/router/router.log
+
+test/push_tst/push_tst
+test/push_tst/push_tst.on

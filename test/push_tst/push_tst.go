@@ -26,6 +26,8 @@ import (
 	"PushServer/util"
 	"PushServer/slog"
 
+	"PushServer/test/push_tst/client"
+
 )
 
 
@@ -595,7 +597,8 @@ func main() {
 	tstBussinessSend(3)
 	//tstBussinessSend(1, 10)
 */
-	tstClient()
+	//tstClient()
+	democlient.StartClient()
 
 	var input string
 	fmt.Scanln(&input)
