@@ -313,7 +313,7 @@ func (self *Client) Recv() {
 	defer self.deferErrNotifyCLOSED(&errmsg)
 
 
-	isclose, err := util.PackageSplit(self.conn, self.proto)
+	isclose, err := util.PackageSplit(self.conn, 60*10, self.proto)
 	if err != nil {
 		slog.Warnf("%s client:%s packageSplit isclose:%t error: %s", fun, self, isclose, err)
 		if !isclose {
