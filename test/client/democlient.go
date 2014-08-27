@@ -41,7 +41,7 @@ type linkerConfig struct {
 // buss ack
 // send
 var (
-	routerUrl string = "http://router.push.edaijia.cn/route"
+	routerUrl string = ""
 	clientCount int = 0
 )
 
