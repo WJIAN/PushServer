@@ -295,7 +295,7 @@ func (self *Store) syn(cli *Client) (map[uint64][]byte, []uint64) {
 
 	}
 
-	slog.Traceln(rv, sortkeys)
+	//slog.Traceln(rv, sortkeys)
 
 
 	return rv, sortkeys

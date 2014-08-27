@@ -164,28 +164,7 @@ func (self *Client) sendBussRetry(msgid uint64, pb []byte) {
 	}()
 
 }
-/*
-func (self *Client) SendBussiness(msgid uint64, ziptype int32, datatype int32, data []byte) string {
-	fun := "Client.SendBussiness"
 
-	buss := &pushproto.Talk {
-		Type: pushproto.Talk_BUSSINESS.Enum(),
-		Msgid: proto.Uint64(msgid),
-		Ziptype: proto.Int32(ziptype),
-		Datatype: proto.Int32(datatype),
-		Bussdata: data,
-	}
-
-
-	slog.Debugf("%s client:%s msg:%s", fun, self, buss)
-
-	spb, err := proto.Marshal(buss)
-	if err != nil {
-		slog.Fatalf("%s client:%s marshaling error:%s", fun, self, err)
-		return self.remoteaddr
-	}
-
-*/
 func (self *Client) SendBussiness(msgid uint64, spb []byte) string {
 	fun := "Client.SendBussiness"
 	p := util.Packdata(spb)
