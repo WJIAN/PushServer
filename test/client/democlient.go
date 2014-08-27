@@ -60,7 +60,7 @@ type userClient struct {
 }
 
 func (m *userClient) String() string {
-	return fmt.Sprintf("%s@%s@%s", m.cid, m.tuple4, m.state)
+	return fmt.Sprintf("%d@%s@%s@%s", m.index, m.cid, m.tuple4, m.state)
 }
 
 // 模拟的installid生成
@@ -246,7 +246,7 @@ func (m *userClient) heart() error {
 
 func (m *userClient) recvBuss(ziptype int32, datatype int32,  data []byte) {
 	fun := "userClient.recvBuss"
-	slog.Infof("%s recv buss zip:%d dtype:%d data:%s", fun, ziptype, datatype, data)
+	slog.Infof("%s client:%s recv buss zip:%d dtype:%d data:%s", fun, m, ziptype, datatype, data)
 
 }
 
@@ -355,6 +355,10 @@ func (m *userClient) power() {
 	}
 }
 
+func SetClientOffset(offset int) {
+	clientCount = offset
+	slog.Infof("SetClientOffset %d", clientCount)
+}
 
 func NewuserClient() *userClient {
 	uc := &userClient{index: clientCount, powertry: uint(0), cid: "NULL", state: State_INIT}
