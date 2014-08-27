@@ -16,3 +16,9 @@ server/router/router.log
 
 test/push_tst/push_tst
 test/push_tst/push_tst.on
+test/push_tst/logic/push_tst.on
+test/push_tst/logic/push_tst
+
+test/logic_tst/logic_tst
+test/logic_tst/push_tst.on
+test/pressure_tst/pressure_tst

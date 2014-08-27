@@ -26,7 +26,7 @@ import (
 	"PushServer/util"
 	"PushServer/slog"
 
-	"PushServer/test/push_tst/client"
+	"PushServer/test/client"
 
 )
 
