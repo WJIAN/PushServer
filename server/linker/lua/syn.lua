@@ -5,11 +5,13 @@ local ck = 'I.'..cid
 local smk = 'SM.'..cid
 
 redis.call('HMSET', ck,
-                  'remote', ARGV[1],
-                  'appid', ARGV[2],
-                  'installid', ARGV[3],
-                  'restaddr', ARGV[4],
-                  'timeout', ARGV[5]+600
+                  'restaddr', ARGV[1],
+                  'timeout', ARGV[2]+600,
+
+                  'remote', ARGV[3],
+                  'appid', ARGV[4],
+                  'installid', ARGV[5],
+                  'nettype', ARGV[6]
 )
 
 -- 3600*24*7 = 604800

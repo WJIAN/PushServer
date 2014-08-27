@@ -198,11 +198,14 @@ func (self *Store) heart(cli *Client) {
 		"evalsha", self.lua_heart.hash,
 		1,
 		cli.client_id,
+
+		self.restAddr,
+		time.Now().Unix(),
+
 		cli.remoteaddr,
 		cli.appid,
 		cli.installid,
-		self.restAddr,
-		time.Now().Unix(),
+		cli.nettype,
 	}
 
 
@@ -249,11 +252,14 @@ func (self *Store) syn(cli *Client) (map[uint64][]byte, []uint64) {
 		"evalsha", self.lua_syn.hash,
 		1,
 		cli.client_id,
+
+		self.restAddr,
+		time.Now().Unix(),
+
 		cli.remoteaddr,
 		cli.appid,
 		cli.installid,
-		self.restAddr,
-		time.Now().Unix(),
+		cli.nettype,
 	}
 
 

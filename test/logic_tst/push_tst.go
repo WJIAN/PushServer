@@ -598,6 +598,7 @@ func main() {
 	//tstBussinessSend(1, 10)
 */
 	//tstClient()
+	democlient.SetRouterUrl(os.Args[1])
 	democlient.StartClient()
 
 	var input string

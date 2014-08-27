@@ -85,6 +85,7 @@ type Talk struct {
 	Installid  *string `protobuf:"bytes,1003,opt" json:"Installid,omitempty"`
 	Clienttype *string `protobuf:"bytes,1004,opt" json:"Clienttype,omitempty"`
 	Clientver  *string `protobuf:"bytes,1005,opt" json:"Clientver,omitempty"`
+	Nettype    *string `protobuf:"bytes,1006,opt" json:"Nettype,omitempty"`
 	// bussiness ext
 	// 这里的类型没有采用enum，是为了方便跨服务的数据传输
 	Ziptype          *int32 `protobuf:"varint,1500,opt" json:"Ziptype,omitempty"`
@@ -157,6 +158,13 @@ func (m *Talk) GetClienttype() string {
 func (m *Talk) GetClientver() string {
 	if m != nil && m.Clientver != nil {
 		return *m.Clientver
+	}
+	return ""
+}
+
+func (m *Talk) GetNettype() string {
+	if m != nil && m.Nettype != nil {
+		return *m.Nettype
 	}
 	return ""
 }

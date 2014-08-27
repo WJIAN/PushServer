@@ -23,42 +23,14 @@ import (
 
 // my lib
 import (
+	. "PushServer/connutil"
+
 	"PushServer/util"
 	"PushServer/pb"
 	"PushServer/slog"
 
 )
 
-
-type stateType int32
-
-const (
-	State_CLOSED       stateType = 0
-	State_TCP_READY    stateType = 1
-	State_SYN_RCVD     stateType = 2
-	State_ESTABLISHED  stateType = 3
-
-)
-
-func (self stateType) String() string {
-	s := "UNKNOWNSTATE"
-
-	if State_CLOSED == self {
-		s = "CLOSED"
-
-	} else if State_TCP_READY == self {
-		s = "TCP_READY"
-
-	} else if State_SYN_RCVD  == self {
-		s = "SYN_RCVD"
-
-	} else if State_ESTABLISHED == self {
-		s = "ESTABLISHED"
-
-	}
-
-	return s
-}
 
 
 // 一个client可能会用到三种类型的goroutine
@@ -70,11 +42,12 @@ func (self stateType) String() string {
 // 3种go都可能会触发连接状态变更
 type Client struct {
 	state_lock       sync.Mutex
-	state         stateType
+	state         ConnStateType
 	// -------------------------
 
 	appid string
 	installid string
+	nettype string
 
 	client_id   string // CLOSED TCP_READY SYN_RCVD is tmp id
 	conn        net.Conn
@@ -87,7 +60,7 @@ type Client struct {
 
 func (self *Client) String() string {
 	//if len(self.client_id) < 7 {
-	return fmt.Sprintf("%s@%s@%s", self.client_id, self.remoteaddr, self.state)
+	return fmt.Sprintf("%s@%s@%s@%s", self.client_id, self.remoteaddr, self.state, self.nettype)
 	//} else {
 	//	return fmt.Sprintf("%s@%s", self.client_id[:7], self.remoteaddr)
 	//}
@@ -120,7 +93,7 @@ func (self *Client) chgCLOSED2TCP_READY(c net.Conn) {
 	self.installid = ""
 	self.client_id = "NULL"
 	self.conn = c
-	self.remoteaddr = c.RemoteAddr().String()
+	self.remoteaddr = fmt.Sprintf("%s-%s", self.conn.LocalAddr().String(), self.conn.RemoteAddr().String())
 	self.bussmsg = make(map[uint64] chan bool)
 
 	old_state := self.state
@@ -147,10 +120,12 @@ func (self *Client) chgESTABLISHED(pb *pushproto.Talk) bool {
 
 	appid := pb.GetAppid()
 	installid := pb.GetInstallid()
+	nettype := pb.GetNettype()
 	sec := ConnManager.secret()
 
 	self.appid = appid
 	self.installid = installid
+	self.nettype = nettype
 
 
 	h := md5.Sum([]byte(appid+installid+sec))

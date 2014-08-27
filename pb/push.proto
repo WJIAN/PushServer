@@ -31,6 +31,7 @@ message Talk {
 	optional string Installid =  1003;  // SYN
 	optional string Clienttype =  1004; // SYN
 	optional string Clientver =  1005;  // SYN
+	optional string Nettype =  1006;  // SYN
 
 
 	// bussiness ext

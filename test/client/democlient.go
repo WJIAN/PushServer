@@ -269,6 +269,7 @@ func (m *userClient) syn() error {
 		Auth: proto.String("Fuck"),
 		Clienttype: proto.String("Android"),
 		Clientver: proto.String("1.0.0"),
+		Nettype: proto.String("WLAN"),
 
 	}
 
@@ -353,6 +354,11 @@ func (m *userClient) power() {
 		}
 
 	}
+}
+
+func SetRouterUrl(url string) {
+	routerUrl = url
+	slog.Infof("SetRouterUrl %d", routerUrl)
 }
 
 func SetClientOffset(offset int) {
