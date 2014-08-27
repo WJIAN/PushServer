@@ -22,6 +22,8 @@ import (
 	"PushServer/util"
 	"PushServer/slog"
 
+	. "PushServer/connutil"
+
 )
 
 type linkerConfig struct {
@@ -39,55 +41,8 @@ type linkerConfig struct {
 // send
 var (
 	routerUrl string = "http://router.push.edaijia.cn/route"
+	// 模拟的installid
 )
-
-type stateType int32
-const (
-	State_CLOSED       stateType = 0
-	State_TCP_READY    stateType = 1
-	State_SYN_RCVD     stateType = 2 // only server
-	State_ESTABLISHED  stateType = 3
-	// down only client
-	State_ROUTE_WAIT   stateType = 4
-	State_TCP_CONF       stateType = 5
-	State_TCP_WAIT       stateType = 6
-	State_SYN_SEND       stateType = 8
-
-
-	State_INIT    stateType = 1000
-)
-
-func (self stateType) String() string {
-	s := "INITSTATE"
-
-	if State_CLOSED == self {
-		s = "CLOSED"
-
-	} else if State_TCP_READY == self {
-		s = "TCP_READY"
-
-	} else if State_SYN_RCVD  == self {
-		s = "SYN_RCVD"
-
-	} else if State_ESTABLISHED == self {
-		s = "ESTABLISHED"
-
-	} else if State_ROUTE_WAIT == self {
-		s = "ROUTE_WAIT"
-
-	} else if State_TCP_CONF == self {
-		s = "TCP_CONF"
-
-	} else if State_TCP_WAIT == self {
-		s = "TCP_WAIT"
-
-	} else if State_SYN_SEND == self {
-		s = "SYN_SEND"
-
-	}
-
-	return s
-}
 
 
 type userClient struct {
@@ -97,7 +52,7 @@ type userClient struct {
 	linkerConf *linkerConfig
 	conn net.Conn
 
-	state  stateType
+	state  ConnStateType
 	cid string
 	tuple4 string
 }
@@ -220,7 +175,7 @@ func (m *userClient) protoAns(data []byte) {
 
 }
 
-func (m *userClient) changeState(newstate stateType) {
+func (m *userClient) changeState(newstate ConnStateType) {
 	fun := "userClient.changeState"
 	if m.state == newstate {
 		slog.Errorf("%s state is already %s", fun, newstate)
