@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"strconv"
 	"sync"
+	"crypto/sha1"
 //	"code.google.com/p/go-uuid/uuid"
 	"code.google.com/p/goprotobuf/proto"
 )
@@ -41,11 +42,12 @@ type linkerConfig struct {
 // send
 var (
 	routerUrl string = "http://router.push.edaijia.cn/route"
-	// 模拟的installid
+	clientCount int = 0
 )
 
 
 type userClient struct {
+	index int
 	send_lock sync.Mutex
 
 	powertry uint
@@ -57,10 +59,15 @@ type userClient struct {
 	tuple4 string
 }
 
-func (self *userClient) String() string {
-	return fmt.Sprintf("%s@%s@%s", self.cid, self.tuple4, self.state)
+func (m *userClient) String() string {
+	return fmt.Sprintf("%s@%s@%s", m.cid, m.tuple4, m.state)
 }
 
+// 模拟的installid生成
+func (m *userClient) mockInstallid() string {
+	h := sha1.Sum([]byte(fmt.Sprintf("%d", m.index)))
+	return fmt.Sprintf("%x", h)
+}
 
 
 func (m *userClient) getLinker() ([]byte, error) {
@@ -258,7 +265,7 @@ func (m *userClient) syn() error {
 	pb := &pushproto.Talk{
 		Type: pushproto.Talk_SYN.Enum(),
 		Appid: proto.String("shawn"),
-		Installid: proto.String("1cf52f542ec2f6d1e96879bd6f5243da3baa42e4"),
+		Installid: proto.String(m.mockInstallid()),
 		Auth: proto.String("Fuck"),
 		Clienttype: proto.String("Android"),
 		Clientver: proto.String("1.0.0"),
@@ -271,29 +278,25 @@ func (m *userClient) syn() error {
 func (m *userClient) doheart() {
 	fun := "userClient.doheart"
 
-	ticker := time.NewTicker(time.Second * time.Duration(m.linkerConf.heart))
-	//ticker := time.NewTicker(time.Second * time.Duration(5))
-	// 当前心跳的4-tuple，防止一个连接启动了多个heartbeat
-	curtuple4 := m.tuple4
-	go func() {
-		for {
-			select {
-			case <-ticker.C:
-				if curtuple4 != m.tuple4 {
-					slog.Infof("%s client:%s heart conn change oldtuple4:%s", fun, m, curtuple4)
-					return
-				}
-
-				if m.state == State_ESTABLISHED {
-					if err := m.heart(); err != nil {
-						slog.Errorf("%s client:%s heart err:%s", fun, m, err)
-						m.changeState(State_CLOSED)
-						return
-					}
-				}
-			}
+	for {
+		if m.linkerConf != nil {
+			slog.Infoln(fun, "config sleep", m.linkerConf.heart)
+			time.Sleep(time.Second * time.Duration(m.linkerConf.heart))
+		} else {
+			slog.Infoln(fun, "default sleep 60")
+			time.Sleep(time.Second * time.Duration(60))
 		}
-    }()
+
+		if m.state == State_ESTABLISHED {
+			if err := m.heart(); err != nil {
+				slog.Errorf("%s client:%s heart err:%s", fun, m, err)
+				m.changeState(State_CLOSED)
+			}
+		} else {
+			slog.Infof("%s client:%s is not ESTABLISHED", fun, m)
+		}
+
+	}
 
 }
 
@@ -302,6 +305,9 @@ func (m *userClient) doheart() {
 func (m *userClient) power() {
 
 	fun := "userClient.power"
+
+	go m.doheart()
+
 	trytimeceil := uint(6)
 	for {
 		m.changeState(State_CLOSED)
@@ -317,7 +323,7 @@ func (m *userClient) power() {
 		m.changeState(State_ROUTE_WAIT)
 		m.linkerConf = m.persistGetLinker()
 		m.changeState(State_TCP_CONF)
-		slog.Infoln(m.linkerConf)
+		slog.Infoln(fun, "get config:", m.linkerConf)
 
 
 		m.changeState(State_TCP_WAIT)
@@ -340,8 +346,6 @@ func (m *userClient) power() {
 
 		m.changeState(State_SYN_SEND)
 
-		m.doheart()
-
 		// hold here
 		isclose, err := util.PackageSplit(conn, 8*60, m.protoAns)
 		if err != nil {
@@ -353,7 +357,8 @@ func (m *userClient) power() {
 
 
 func NewuserClient() *userClient {
-	uc := &userClient{powertry: uint(0), cid: "NULL", state: State_INIT}
+	uc := &userClient{index: clientCount, powertry: uint(0), cid: "NULL", state: State_INIT}
+	clientCount++
 
 	slog.Infof("NewuserClient init client:%s", uc)
 

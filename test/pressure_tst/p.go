@@ -10,5 +10,4 @@ import (
 func main() {
 	slog.Init("")
 	democlient.StartClient()
-
 }
