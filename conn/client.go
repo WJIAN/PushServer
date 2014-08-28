@@ -125,7 +125,7 @@ func (self *Client) chgESTABLISHED(pb *pushproto.Talk) bool {
 	appid := pb.GetAppid()
 	installid := pb.GetInstallid()
 	nettype := pb.GetNettype()
-	sec := ConnManager.secret()
+	sec := gServConfig.CidSecret
 
 	self.appid = appid
 	self.installid = installid

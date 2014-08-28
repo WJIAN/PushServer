@@ -148,7 +148,7 @@ func PowerServer(cfg []byte) {
 	ConnStore = NewStore(gServConfig.LuaPath, fmt.Sprintf("%s:%d", interIp, gServConfig.RestPort), gServConfig.RedisAddr)
 
 
-	ConnManager = NewConnectionManager(gServConfig.ServId, gServConfig.CidSecret)
+	ConnManager = NewConnectionManager()
 
 	SetRouterHost(gServConfig.RouterHost)
 	StartHttp(fmt.Sprintf(":%d", gServConfig.RestPort))

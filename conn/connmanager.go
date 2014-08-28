@@ -26,7 +26,6 @@ type ConnectionManager struct {
 
 	sf *gosnow.SnowFlake
 
-	sec string
 	offline bool
 }
 
@@ -147,10 +146,6 @@ func (self *ConnectionManager) Msgid() (uint64, error) {
 }
 
 
-func (self *ConnectionManager) secret() string {
-	return self.sec
-}
-
 func (self *ConnectionManager) isOffline() bool {
 	return self.offline
 }
@@ -241,10 +236,10 @@ func (self *ConnectionManager) Loop(addr string) {
 }
 
 
-func NewConnectionManager(servId uint32, secret string) *ConnectionManager {
+func NewConnectionManager() *ConnectionManager {
 	//v, err := gosnow.Default()
 	gosnow.Since = util.Since2014 / 1000
-	v, err := gosnow.NewSnowFlake(servId)
+	v, err := gosnow.NewSnowFlake(gServConfig.ServId)
 	if err != nil {
 		slog.Panicln("snowflake init error, msgid can not get!")
 	}
@@ -254,7 +249,6 @@ func NewConnectionManager(servId uint32, secret string) *ConnectionManager {
 		clients: make(map[string]*Client),
 
 		sf: v,
-		sec: secret,
 
 		offline: false,
 
