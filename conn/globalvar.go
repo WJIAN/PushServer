@@ -36,6 +36,8 @@ type GenServConfig struct {
 	linker string          // 本机的ip port，向router汇报key
 	linkerConfig []byte      // 反给客户端的配置参数
 
+	restHost string       // 该服务运行的机器，rest ip 和端口
+
 }
 
 
@@ -77,6 +79,17 @@ var gGenServConfig *GenServConfig = &GenServConfig{}
 
 var ConnStore *Store
 var ConnManager *ConnectionManager
+
+func (self *GenServConfig) setrestHost() {
+	interIp, err := util.GetInterIp()
+	if err != nil {
+		slog.Panicln("get local ip error")
+	}
+
+	self.restHost = fmt.Sprintf("%s:%d", interIp, gServConfig.RestPort)
+
+
+}
 
 func (self *GenServConfig) setLinker() {
 
@@ -139,13 +152,7 @@ func PowerServer(cfg []byte) {
 	gGenServConfig.setLinker()
 
 
-	// service
-	interIp, err := util.GetInterIp()
-	if err != nil {
-		slog.Panicln("get local ip error")
-	}
-
-	ConnStore = NewStore(gServConfig.LuaPath, fmt.Sprintf("%s:%d", interIp, gServConfig.RestPort), gServConfig.RedisAddr)
+	ConnStore = NewStore()
 	ConnManager = NewConnectionManager()
 
 	StartHttp()

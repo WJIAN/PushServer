@@ -71,7 +71,8 @@ func loadLuaFile(path string, file string) *LuaDo {
 }
 
 
-func NewStore(luapath string, restaddr string, redisaddr []string) *Store {
+func NewStore() *Store {
+	luapath := gServConfig.LuaPath
 	return &Store {
 		lua_syn: loadLuaFile(luapath, LUA_SYN),
 		lua_heart: loadLuaFile(luapath, LUA_HEART),
@@ -82,9 +83,9 @@ func NewStore(luapath string, restaddr string, redisaddr []string) *Store {
 		pool: rediscluster.NewRedisPool(),
 
 		luaPath: luapath,
-		restAddr: restaddr,
+		restAddr: gGenServConfig.restHost,
 
-		redisAddr: redisaddr,
+		redisAddr: gServConfig.RedisAddr,
 
 	}
 
