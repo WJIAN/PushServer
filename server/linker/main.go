@@ -28,5 +28,5 @@ func main() {
 
 
 
-	connection.PowerServer(data)
+	connection.Power(data)
 }

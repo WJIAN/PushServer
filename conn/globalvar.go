@@ -175,7 +175,7 @@ func (self *GenServConfig) setLinker() {
 
 
 
-func PowerServer(cfg []byte) {
+func Power(cfg []byte) {
 	json.Unmarshal(cfg, gServConfig)
 	log.Println(gServConfig)
 
