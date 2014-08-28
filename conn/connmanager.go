@@ -5,6 +5,7 @@ package connection
 
 // base lib
 import (
+	"fmt"
 	"net"
 	"time"
 	"runtime"
@@ -200,8 +201,10 @@ func (self *ConnectionManager) NumConn() int {
 }
 
 
-func (self *ConnectionManager) Loop(addr string) {
+func (self *ConnectionManager) Loop() {
 	fun := "ConnectionManager.Loop"
+
+	addr := fmt.Sprintf(":%d", gServConfig.ConnPort)
 
 	tcpAddr, error := net.ResolveTCPAddr("tcp", addr)
 	if error != nil {

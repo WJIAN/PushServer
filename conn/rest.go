@@ -383,7 +383,7 @@ func setonline(w http.ResponseWriter, r *http.Request) {
 
 
 
-func StartHttp(httpport string) {
+func StartHttp() {
 	go func() {
 		http.HandleFunc("/push/", push)
 		http.HandleFunc("/inpush/", inpush)
@@ -392,7 +392,7 @@ func StartHttp(httpport string) {
 		http.HandleFunc("/setoffline", setoffline)
 		http.HandleFunc("/setonline", setonline)
 
-		err := http.ListenAndServe(httpport, nil) //设置监听的端口
+		err := http.ListenAndServe(fmt.Sprintf(":%d", gServConfig.RestPort), nil) //设置监听的端口
 		if err != nil {
 			slog.Panicf("StartHttp ListenAndServe: %s", err)
 		}
