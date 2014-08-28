@@ -32,20 +32,16 @@ type RestReturn struct {
 }
 
 
-var routerHost []string
-func SetRouterHost(rh []string) {
-	routerHost = rh
-}
 
 func DorestSublinker(linker string, cfg []byte) {
-	for _, h := range(routerHost) {
+	for _, h := range(gServConfig.RouterHost) {
 		restSublinker(h, linker, cfg)
 	}
 
 }
 
 func DorestDellinker(linker string) {
-	for _, h := range(routerHost) {
+	for _, h := range(gServConfig.RouterHost) {
 		restDellinker(h, linker)
 	}
 

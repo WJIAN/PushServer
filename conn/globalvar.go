@@ -150,7 +150,7 @@ func PowerServer(cfg []byte) {
 
 	ConnManager = NewConnectionManager()
 
-	SetRouterHost(gServConfig.RouterHost)
+
 	StartHttp(fmt.Sprintf(":%d", gServConfig.RestPort))
 
 	ConnManager.Loop(fmt.Sprintf(":%d", gServConfig.ConnPort))
