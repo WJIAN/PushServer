@@ -10,7 +10,7 @@ import (
 	"PushServer/slog"
 )
 
-// ---服务器全局配置参数---
+// ---服务器由用户指定的全局配置参数---
 type ServConfig struct {
 	// ---- 没有默认值的配置 -----
 	ServId uint32          // 服务id，不同的副本需要不同，该id在msgid生成会使用到
@@ -28,6 +28,13 @@ type ServConfig struct {
 	WriteTimeoutScale int  // 服务写超时时间，单位秒
 	ConnPort int           // 服务器监听的端口
 	AckTimeout int         // 重传的超时时间，单位秒
+
+}
+
+// 生成的配置
+type GenServConfig struct {
+	linker string          // 本机的ip port，向router汇报key
+	linkerConfig []byte      // 反给客户端的配置参数
 
 }
 
@@ -63,11 +70,51 @@ var gServConfig *ServConfig = &ServConfig{
 	AckTimeout: 60 * 5,
 }
 
+var gGenServConfig *GenServConfig = &GenServConfig{}
+
 
 
 
 var ConnStore *Store
 var ConnManager *ConnectionManager
+
+func (self *GenServConfig) setLinker() {
+
+	fun := "GenServConfig.setLinker"
+
+
+	ip, err := util.GetExterIp()
+	if err != nil {
+		slog.Warnln("can not find outer ip", err)
+		// 没有外网ip，使用内网的
+		ip, err = util.GetInterIp()
+		if err != nil {
+			slog.Warnln("exter inter ip can not find", err)
+			// 都没有的使用本地ip
+			ip, err = util.GetLocalIp()
+			if err != nil {
+				slog.Panicln("exter inter local ip can not find", err)
+			}
+
+		}
+	}
+
+
+	//slog.Infof("%s linker:%s", fun, cfgLinker)
+	jsonLinkers := make(map[string]string)
+	jsonLinkers["heart"] = fmt.Sprintf("%d", gServConfig.HeartIntv)
+	jsonLinkers["ip"] = ip
+	jsonLinkers["port"] = fmt.Sprintf("%d", gServConfig.ConnPort)
+	self.linkerConfig, _ = json.Marshal(&jsonLinkers)
+	self.linker = fmt.Sprintf("%s:%s", ip, jsonLinkers["port"])
+
+	slog.Infof("%s linker:%s cfg:%s", fun, self.linker, self.linkerConfig)
+
+	//{"heart":"300", "ip": "127.0.0.1", "port": "9600"},
+
+
+}
+
 
 
 func PowerServer(cfg []byte) {
@@ -89,6 +136,7 @@ func PowerServer(cfg []byte) {
 		slog.Panicln("heart interv not define")
 	}
 
+	gGenServConfig.setLinker()
 
 
 	// service
@@ -105,7 +153,7 @@ func PowerServer(cfg []byte) {
 	SetRouterHost(gServConfig.RouterHost)
 	StartHttp(fmt.Sprintf(":%d", gServConfig.RestPort))
 
-	ConnManager.Loop(fmt.Sprintf(":%d", gServConfig.ConnPort), int32(gServConfig.HeartIntv))
+	ConnManager.Loop(fmt.Sprintf(":%d", gServConfig.ConnPort))
 
 }
 

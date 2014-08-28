@@ -5,26 +5,16 @@ package connection
 
 // base lib
 import (
-	"strings"
-	"fmt"
-	"encoding/json"
 	"net"
 	"time"
 	"runtime"
-//	"crypto/sha1"
-)
 
-// ext lib
-import (
-	//"code.google.com/p/go-uuid/uuid"
-//	"code.google.com/p/goprotobuf/proto"
+
 	"github.com/sdming/gosnow"
-
 	"code.google.com/p/goprotobuf/proto"
-)
 
-// my lib
-import (
+
+
 	"PushServer/slog"
 	"PushServer/pb"
 	"PushServer/util"
@@ -32,22 +22,12 @@ import (
 
 
 type ConnectionManager struct {
-	linker string
-	linkConfig []byte
 	clients map[string]*Client
 
 	sf *gosnow.SnowFlake
 
 	sec string
 	offline bool
-}
-
-func (self *ConnectionManager) Linker() string {
-	return self.linker
-}
-
-func (self *ConnectionManager) LinkerConfig() []byte {
-	return self.linkConfig
 }
 
 
@@ -178,7 +158,7 @@ func (self *ConnectionManager) isOffline() bool {
 
 func (self *ConnectionManager) setOffline() {
 	self.offline = true
-	DorestDellinker(self.Linker())
+	DorestDellinker(gGenServConfig.linker)
 
     for _, v := range self.clients {
 		v.sendREROUTE()
@@ -199,7 +179,7 @@ func (self *ConnectionManager) cronJob() {
 		for {
 
 			if !self.offline {
-				DorestSublinker(self.Linker(), self.LinkerConfig())
+				DorestSublinker(gGenServConfig.linker, gGenServConfig.linkerConfig)
 			}
 
 			select {
@@ -224,50 +204,8 @@ func (self *ConnectionManager) NumConn() int {
 	return len(self.clients)
 }
 
-func (self *ConnectionManager) setLinker(addr string, heart int32) {
 
-	fun := "ConnectionManager.setLinker"
-
-	if heart == 0 {
-		slog.Panicln("heart interv not define")
-
-	}
-
-
-	ip, err := util.GetExterIp()
-	if err != nil {
-		slog.Warnln("can not find outer ip", err)
-		// 没有外网ip，使用内网的
-		ip, err = util.GetInterIp()
-		if err != nil {
-			slog.Warnln("exter inter ip can not find", err)
-			// 都没有的使用本地ip
-			ip, err = util.GetLocalIp()
-			if err != nil {
-				slog.Panicln("exter inter local ip can not find", err)
-			}
-
-		}
-	}
-
-
-	//slog.Infof("%s linker:%s", fun, cfgLinker)
-	jsonLinkers := make(map[string]string)
-	jsonLinkers["heart"] = fmt.Sprintf("%d", heart)
-	jsonLinkers["ip"] = ip
-	jsonLinkers["port"] = strings.Split(addr, ":")[1]
-	self.linkConfig, _ = json.Marshal(&jsonLinkers)
-	self.linker = fmt.Sprintf("%s:%s", ip, jsonLinkers["port"])
-
-	slog.Infof("%s linker:%s cfg:%s", fun, self.linker, self.linkConfig)
-
-	//{"heart":"300", "ip": "127.0.0.1", "port": "9600"},
-
-
-}
-
-
-func (self *ConnectionManager) Loop(addr string, heart int32) {
+func (self *ConnectionManager) Loop(addr string) {
 	fun := "ConnectionManager.Loop"
 
 	tcpAddr, error := net.ResolveTCPAddr("tcp", addr)
@@ -284,9 +222,6 @@ func (self *ConnectionManager) Loop(addr string, heart int32) {
 
 	}
 	defer netListen.Close()
-
-
-	self.setLinker(addr, heart)
 
 	self.cronJob()
 
