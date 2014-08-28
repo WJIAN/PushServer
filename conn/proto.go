@@ -109,8 +109,10 @@ func (self *Client) sendBussRetry(msgid uint64, pb []byte) {
 
 	//retry_intv := 2
 	//retry_time := 3
-	// 取消重传，TCP对连接重传没什么意义
-	retry_intv := 5*60 // 超时设置5m
+	// 取消重传，TCP STREAM式的协议对同已连接重传没什么意义
+	// 如果TCP没有失效，后面重传的数据客户端如果
+	// 收到，那么之前发的数据客户端一定收到了
+	retry_intv := gServConfig.AckTimeout
 	retry_time := 0 // 不重传
 
 
