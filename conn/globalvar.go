@@ -15,11 +15,11 @@ type ServConfig struct {
 	// ---- 没有默认值的配置 -----
 	ServId uint32          // 服务id，不同的副本需要不同，该id在msgid生成会使用到
 	CidSecret string       // client id 生成加密字符串
-	LogFile string         // 服务器log名称
+	LogFile string         // 服务器log名称, 不提供则输出到标准输出
 	LuaPath string         // 存取使用的lua脚本位置
 
 	RedisAddr []string     // 使用的redis 地址列表
-	RouterHost []string    // 使用的router rest api host
+	RouterHost []string    // 使用的router rest api host，不提供则不注册router
 
 	// ------以下是有默认值的----------
 	RestPort int           // rest api 使用的端口
@@ -28,6 +28,51 @@ type ServConfig struct {
 	WriteTimeoutScale int  // 服务写超时时间，单位秒
 	ConnPort int           // 服务器监听的端口
 	AckTimeout int         // 重传的超时时间，单位秒
+
+}
+
+
+// 验证配置合法性
+func (self *ServConfig) check() {
+	if self.CidSecret == "" {
+		slog.Panicln("CidSecret not define")
+	}
+
+	if self.LuaPath == "" {
+		slog.Panicln("LuaPath not define")
+	}
+
+	if len(self.RedisAddr) == 0 {
+		slog.Panicln("RedisAddr not define")
+	}
+
+
+	if self.RestPort == 0 {
+		slog.Panicln("RestPort not define")
+	}
+
+	if self.HeartIntv == 0 {
+		slog.Panicln("HeartIntv not define")
+	}
+
+	if self.ReadTimeoutScale == 0 {
+		slog.Panicln("ReadTimeoutScale not define")
+	}
+
+	if self.WriteTimeoutScale == 0 {
+		slog.Panicln("WriteTimeoutScale not define")
+	}
+
+	if self.ConnPort == 0 {
+		slog.Panicln("ConnPort not define")
+	}
+
+
+	if self.AckTimeout == 0 {
+		slog.Panicln("AckTimeout not define")
+	}
+
+
 
 }
 
@@ -134,27 +179,27 @@ func PowerServer(cfg []byte) {
 	json.Unmarshal(cfg, gServConfig)
 	log.Println(gServConfig)
 
-
 	// log out init
 	logFile := gServConfig.LogFile
 	slog.Init(logFile)
 
-
-
 	slog.Infof("cfg:%s", cfg)
 	slog.Infoln("gServConfig", gServConfig)
 
-	// config check
-	if gServConfig.HeartIntv == 0 {
-		slog.Panicln("heart interv not define")
-	}
+	gServConfig.check()
 
+
+
+	// 生成二级配置
 	gGenServConfig.setLinker()
 
 
+	// 服务创建
 	ConnStore = NewStore()
 	ConnManager = NewConnectionManager()
 
+
+	// 启动服务
 	StartHttp()
 	ConnManager.Loop()
 
