@@ -4,6 +4,7 @@ package democlient
 // ext lib
 import (
 	"fmt"
+	"log"
 	"time"
 	"net"
     "net/http"
@@ -15,10 +16,9 @@ import (
 	"crypto/sha1"
 //	"code.google.com/p/go-uuid/uuid"
 	"code.google.com/p/goprotobuf/proto"
-)
+	"github.com/sdming/gosnow"
 
-// my lib
-import (
+
 	"PushServer/pb"
 	"PushServer/util"
 	"PushServer/slog"
@@ -43,7 +43,17 @@ type linkerConfig struct {
 var (
 	routerUrl string = ""
 	clientCount int = 0
+	snowFlake *gosnow.SnowFlake
 )
+
+func init() {
+	gosnow.Since = util.Since2014 / 1000
+	v, err := gosnow.NewSnowFlake(0)
+	if err != nil {
+		log.Panicln("snowflake init error, msgid can not get!")
+	}
+	snowFlake = v
+}
 
 
 type userClient struct {
@@ -222,9 +232,14 @@ func (m *userClient) send(pb *pushproto.Talk) error {
 	m.send_lock.Lock()
 	defer m.send_lock.Unlock()
 
+	if m.conn == nil {
+		return errors.New(fmt.Sprintf("send no tcp"))
+	}
+
 	m.conn.SetWriteDeadline(time.Now().Add(time.Duration(5) * time.Second))
 	ln, err := m.conn.Write(sb)
 	if ln != len(sb) || err != nil {
+		m.changeState(State_CLOSED)
 		return errors.New(fmt.Sprintf("send error:%s", err))
 	}
 
@@ -247,6 +262,35 @@ func (m *userClient) heart() error {
 func (m *userClient) recvBuss(ziptype int32, datatype int32,  data []byte) {
 	fun := "userClient.recvBuss"
 	slog.Infof("%s client:%s recv buss zip:%d dtype:%d data:%s", fun, m, ziptype, datatype, data)
+
+}
+
+func (m *userClient) SendBuss(ziptype int32, datatype int32, data []byte) error {
+	fun := "userClient.SendBuss"
+
+	if m.state != State_ESTABLISHED {
+		return errors.New("conn is not ESTABLISHED")
+
+	}
+
+	msgid, err := snowFlake.Next()
+
+	if err != nil {
+		slog.Fatalf("%s client:%s get msgid error:%s", fun, m, err)
+		return err
+	}
+
+	pb := &pushproto.Talk {
+		Type: pushproto.Talk_BUSSINESS.Enum(),
+		Msgid: proto.Uint64(msgid),
+		Ziptype: proto.Int32(ziptype),
+		Datatype: proto.Int32(datatype),
+		Bussdata: data,
+	}
+
+
+	return m.send(pb)
+
 
 }
 
@@ -289,10 +333,7 @@ func (m *userClient) doheart() {
 		}
 
 		if m.state == State_ESTABLISHED {
-			if err := m.heart(); err != nil {
-				slog.Errorf("%s client:%s heart err:%s", fun, m, err)
-				m.changeState(State_CLOSED)
-			}
+			m.heart()
 		} else {
 			slog.Infof("%s client:%s is not ESTABLISHED", fun, m)
 		}
@@ -303,7 +344,7 @@ func (m *userClient) doheart() {
 
 
 // 增加状态log输出
-func (m *userClient) power() {
+func (m *userClient) Power() {
 
 	fun := "userClient.power"
 
@@ -378,6 +419,6 @@ func NewuserClient() *userClient {
 
 func StartClient() {
 	cli := NewuserClient()
-	cli.power()
+	cli.Power()
 
 }

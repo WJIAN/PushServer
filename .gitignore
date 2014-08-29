@@ -22,3 +22,6 @@ test/push_tst/logic/push_tst
 test/logic_tst/logic_tst
 test/logic_tst/push_tst.on
 test/pressure_tst/pressure_tst
+
+
+test/send_tst/send_tst

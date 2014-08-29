@@ -3,6 +3,7 @@ package connection
 
 import (
 	"fmt"
+	"errors"
 	"time"
 	"crypto/sha1"
 	"strconv"
@@ -30,7 +31,8 @@ type Store struct {
 	lua_close *LuaDo
 	lua_addmsg *LuaDo
 	lua_rmmsg *LuaDo
-//	lua_heart *LuaDo
+	lua_recvmsg *LuaDo
+
 
 	pool *rediscluster.RedisPool
 	luaPath string
@@ -46,6 +48,7 @@ const (
 	LUA_CLOSE string = "close.lua"
 	LUA_ADDMSG string = "addmsg.lua"
 	LUA_RMMSG string = "rmmsg.lua"
+	LUA_RECVMSG string = "recvmsg.lua"
 
 )
 
@@ -79,6 +82,7 @@ func NewStore() *Store {
 		lua_close: loadLuaFile(luapath, LUA_CLOSE),
 		lua_addmsg: loadLuaFile(luapath, LUA_ADDMSG),
 		lua_rmmsg: loadLuaFile(luapath, LUA_RMMSG),
+		lua_recvmsg: loadLuaFile(luapath, LUA_RECVMSG),
 
 		pool: rediscluster.NewRedisPool(),
 
@@ -133,6 +137,44 @@ func (self *Store) doCmd(luado *LuaDo, mcmd map[string][]interface{}) map[string
 
 	return rp
 
+
+}
+
+func (self *Store) recvMsg(cid string, msgid uint64) (bool, error) {
+	//fun := "Store.recvMsg"
+
+    cmd0 := []interface{}{
+		"evalsha", self.lua_recvmsg.hash,
+		1,
+		cid,
+
+		msgid,
+		time.Now().Unix(),
+	}
+
+
+	mcmd := make(map[string][]interface{})
+    mcmd[self.hashRedis(cid)] = cmd0
+
+
+	rp := self.doCmd(self.lua_recvmsg, mcmd)
+	slog.Debugln("total rv", rp)
+
+	for _, r := range(rp) {
+		isdup, err := r.Int()
+		if err != nil {
+			//slog.Errorf("%s err:%s", fun, err)
+			return true, err
+		}
+
+		if isdup == 1 {
+			return true, nil
+		} else {
+			return false, nil
+		}
+	}
+
+	return true, errors.New("redis access error")
 
 }
 

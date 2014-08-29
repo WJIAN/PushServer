@@ -223,9 +223,26 @@ func (self *Client) sendACK(msgid uint64) {
 
 
 func (self *Client) recvBUSSINESS(pb *pushproto.Talk) {
+	fun := "Client.recvBUSSINESS"
 	msgid := pb.GetMsgid()
 
 	self.sendACK(msgid)
+
+	isdup, err := ConnStore.recvMsg(self.client_id, msgid)
+	if err != nil {
+		slog.Fatalf("%s client:%s set recvMsg error:%s", fun, self, err)
+		return
+	}
+
+
+	if isdup {
+		// 重复消息不处理
+		slog.Infof("%s client:%s recv dup msgid:%d", fun, self, msgid)
+
+	} else {
+		// 转发到业务层, 先打印个log
+		slog.Infof("%s client:%s recv buss zip:%d dtype:%d data:%s", fun, self, pb.GetZiptype(), pb.GetDatatype(), pb.GetBussdata())
+	}
 
 }
 
