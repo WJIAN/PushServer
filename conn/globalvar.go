@@ -192,6 +192,7 @@ func Power(cfg []byte) {
 
 	// 生成二级配置
 	gGenServConfig.setLinker()
+	gGenServConfig.setrestHost()
 
 
 	// 服务创建

@@ -96,7 +96,7 @@ func main() {
 
 
 			rv := restPush(cid, []byte(fmt.Sprintf("牛逼不是吹的:%d", i)))
-			slog.Infof("Push %d rv:%s", i, rv)
+			slog.Infof("Push %d cid:%s rv:%s", i, cid, rv)
 
 			//time.Sleep(time.Millisecond * time.Duration(0))
 
