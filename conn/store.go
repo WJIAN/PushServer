@@ -11,7 +11,7 @@ import (
 
 	"github.com/fzzy/radix/redis"
 
-	"PushServer/rediscluster"
+	"PushServer/redispool"
 	"PushServer/slog"
 	"PushServer/util"
 
@@ -34,7 +34,7 @@ type Store struct {
 	lua_recvmsg *LuaDo
 
 
-	pool *rediscluster.RedisPool
+	pool *redispool.RedisPool
 	luaPath string
 	restAddr string
 
@@ -84,7 +84,7 @@ func NewStore() *Store {
 		lua_rmmsg: loadLuaFile(luapath, LUA_RMMSG),
 		lua_recvmsg: loadLuaFile(luapath, LUA_RECVMSG),
 
-		pool: rediscluster.NewRedisPool(),
+		pool: redispool.NewRedisPool(),
 
 		luaPath: luapath,
 		restAddr: gGenServConfig.restHost,
