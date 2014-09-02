@@ -140,11 +140,36 @@ func (self *Store) doCmd(luado *LuaDo, mcmd map[string][]interface{}) map[string
 
 }
 
+
+func (self *Store) doCmdSingle(luado *LuaDo, addr string, cmd []interface{}) *redis.Reply {
+	fun := "Store.doCmdSingle"
+
+	slog.Debugln(fun, "cmd:", cmd)
+
+	rp := self.pool.CmdSingle(addr, cmd)
+	slog.Debugln(fun, "evalsha1", rp)
+
+	if rp.Type == redis.ErrorReply && rp.String() == "NOSCRIPT No matching script. Please use EVAL." {
+		slog.Infoln(fun, "load lua", addr)
+		cmd[0] = "eval"
+		cmd[1] = luado.data
+
+		rp = self.pool.CmdSingle(addr, cmd)
+		slog.Debugln(fun, "eval", rp)
+	}
+
+
+	return rp
+
+
+}
+
+
 func (self *Store) recvMsg(cid string, msgid uint64) (bool, error) {
 	//fun := "Store.recvMsg"
-
+	lua := self.lua_recvmsg
     cmd0 := []interface{}{
-		"evalsha", self.lua_recvmsg.hash,
+		"evalsha", lua.hash,
 		1,
 		cid,
 
@@ -157,8 +182,8 @@ func (self *Store) recvMsg(cid string, msgid uint64) (bool, error) {
     mcmd[self.hashRedis(cid)] = cmd0
 
 
-	rp := self.doCmd(self.lua_recvmsg, mcmd)
-	slog.Debugln("total rv", rp)
+	rp := self.doCmd(lua, mcmd)
+
 
 	for _, r := range(rp) {
 		isdup, err := r.Int()
@@ -179,8 +204,9 @@ func (self *Store) recvMsg(cid string, msgid uint64) (bool, error) {
 }
 
 func (self *Store) rmMsg(cid string, msgid uint64) {
+	lua := self.lua_rmmsg
     cmd0 := []interface{}{
-		"evalsha", self.lua_rmmsg.hash,
+		"evalsha", lua.hash,
 		1,
 		cid,
 		msgid,
@@ -191,9 +217,7 @@ func (self *Store) rmMsg(cid string, msgid uint64) {
     mcmd[self.hashRedis(cid)] = cmd0
 
 
-	rp := self.doCmd(self.lua_rmmsg, mcmd)
-
-	slog.Debugln("total rv", rp)
+	self.doCmd(lua, mcmd)
 
 
 }
@@ -201,8 +225,9 @@ func (self *Store) rmMsg(cid string, msgid uint64) {
 
 func (self *Store) addMsg(cid string, msgid uint64, pb[]byte) string {
 	fun := "Store.addMsg"
+	lua := self.lua_addmsg
     cmd0 := []interface{}{
-		"evalsha", self.lua_addmsg.hash,
+		"evalsha", lua.hash,
 		1,
 		cid,
 		msgid,
@@ -215,10 +240,7 @@ func (self *Store) addMsg(cid string, msgid uint64, pb[]byte) string {
     mcmd[self.hashRedis(cid)] = cmd0
 
 
-	rp := self.doCmd(self.lua_addmsg, mcmd)
-
-	slog.Debugln("total rv", rp)
-
+	rp := self.doCmd(lua, mcmd)
 
 	for _, r := range(rp) {
 		rvs, err := r.Str()
@@ -236,9 +258,10 @@ func (self *Store) addMsg(cid string, msgid uint64, pb[]byte) string {
 
 
 func (self *Store) heart(cli *Client) {
-	fun := "Store.heart"
+	//fun := "Store.heart"
+	lua := self.lua_heart
     cmd0 := []interface{}{
-		"evalsha", self.lua_heart.hash,
+		"evalsha", lua.hash,
 		1,
 		cli.client_id,
 
@@ -256,18 +279,17 @@ func (self *Store) heart(cli *Client) {
     mcmd[self.hashRedis(cli.client_id)] = cmd0
 
 
-	rp := self.doCmd(self.lua_heart, mcmd)
+	self.doCmd(lua, mcmd)
 
-
-	slog.Debugln(fun, "total rv", rp)
 
 }
 
 
 func (self *Store) close(cli *Client) {
-	fun := "Store.heart"
+	//fun := "Store.heart"
+	lua := self.lua_close
     cmd0 := []interface{}{
-		"evalsha", self.lua_close.hash,
+		"evalsha", lua.hash,
 		1,
 		cli.client_id,
 		cli.remoteaddr,
@@ -280,10 +302,8 @@ func (self *Store) close(cli *Client) {
     mcmd[self.hashRedis(cli.client_id)] = cmd0
 
 
-	rp := self.doCmd(self.lua_close, mcmd)
+	self.doCmd(lua, mcmd)
 
-
-	slog.Debugln(fun, "total rv", rp)
 
 }
 
@@ -291,8 +311,9 @@ func (self *Store) close(cli *Client) {
 // 如果有发送失败的消息，则返回发送失败的消息重传
 func (self *Store) syn(cli *Client) (map[uint64][]byte, []uint64) {
 	fun := "Store.syn"
+	lua := self.lua_syn
     cmd0 := []interface{}{
-		"evalsha", self.lua_syn.hash,
+		"evalsha", lua.hash,
 		1,
 		cli.client_id,
 
@@ -310,10 +331,7 @@ func (self *Store) syn(cli *Client) (map[uint64][]byte, []uint64) {
     mcmd[self.hashRedis(cli.client_id)] = cmd0
 
 
-	rp := self.doCmd(self.lua_syn, mcmd)
-
-
-	slog.Debugln("total rv", rp)
+	rp := self.doCmd(lua, mcmd)
 
 	rv := make(map[uint64][]byte)
 	sortkeys := []uint64{}
@@ -345,16 +363,5 @@ func (self *Store) syn(cli *Client) (map[uint64][]byte, []uint64) {
 }
 
 
-// heart 如果有发送失败的消息，则返回发送失败的消息重传
-
-// 不采用只有失败的时候才通知redis的方式
-// 这种方法确实很好，但是如果客户端在syn后，有发送失败的消息重发时候
-// 发送成功，如何清除redis呢？
-// 如果采用每次都通知redis，那么就不存在这个问题，但是要多不少次的redis请求？
-// 对redis取到的失败消息，单独通知
-
-// sendfail
-
-// resendAck
 
 
