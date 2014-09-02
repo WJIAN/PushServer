@@ -14,7 +14,7 @@ import (
 func tstSingle(pool *redispool.RedisPool) {
 
 	cmd0 := []interface{}{"echo", "Hello world A0!"}
-	rp := pool.CmdSingle("127.0.0.1:9600", cmd0)
+	rp := pool.CmdSingle("10.241.221.106:9600", cmd0)
 
 	log.Println("tstSingle", rp)
 
@@ -44,9 +44,7 @@ func tst(pool *redispool.RedisPool) {
 
 }
 
-func main() {
-
-	slog.Init("")
+func tst_base() {
 
 	pool := redispool.NewRedisPool()
 	log.Println(1, pool)
@@ -80,5 +78,30 @@ func main() {
 	time.Sleep(time.Second * time.Duration(1))
 
 
+}
 
+
+func tst_redis_timeout() {
+
+	pool := redispool.NewRedisPool()
+	log.Println(1, pool)
+
+	tstSingle(pool)
+
+	log.Println(2, pool)
+
+	// wait timeout
+	time.Sleep(time.Second * time.Duration(12))
+
+	tstSingle(pool)
+
+	log.Println(3, pool)
+
+}
+
+
+func main() {
+	slog.Init("")
+
+	tst_redis_timeout()
 }

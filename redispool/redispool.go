@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	TIMEOUT_INTV int = 120
+	TIMEOUT_INTV int64 = 200
 )
 
 type RedisEntry struct {
@@ -76,8 +76,16 @@ func (self *RedisPool) add(addr string) (*RedisEntry, error) {
 
 }
 
-func (self *RedisPool) rmTimeout([]*RedisEntry) {
-
+func (self *RedisPool) rmTimeout(rs *[]*RedisEntry) bool {
+	fun := "RedisPool.rmTimeout"
+	// 每次只检查一个最老的超时
+	if len(*rs) > 0 && (time.Now().Unix()-(*rs)[0].stamp) > TIMEOUT_INTV {
+		slog.Infof("%s rm timeout:%s", fun, (*rs)[0])
+		*rs = (*rs)[1:]
+		return true
+	} else {
+		return false
+	}
 
 }
 
@@ -87,7 +95,11 @@ func (self *RedisPool) getCache(addr string) *RedisEntry {
 
 	self.mu.Lock()
 	self.mu.Unlock()
-	if rs, ok := self.clipool[addr]; ok {
+	rs, ok := self.clipool[addr]
+	if ok {
+		if self.rmTimeout(&rs) {
+			self.clipool[addr] = rs
+		}
 		if len(rs) == 0 {
 			return nil
 		} else {
@@ -195,7 +207,7 @@ func NewRedisPool() *RedisPool {
 
 //////////
 //TODO
-// 1. timeout remove
+// OK 1. timeout remove
 // 2. multi addr channel get
 // 3. single addr multi cmd
 // 4. pool conn ceil controll
