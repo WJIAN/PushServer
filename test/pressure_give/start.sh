@@ -1,3 +1,8 @@
+nohup ./pressure_give  10.132.43.5:9500  0 10000 >out0.log 2>&1 &
+nohup ./pressure_give  10.132.43.5:9501  10000 10000 >out1.log 2>&1 &
+
+exit
+
 nohup ./pressure_give  127.0.0.1/linker  0 6000 >out0.log 2>&1 &
 nohup ./pressure_give  127.0.0.1/linker 6000 6000 >out1.log 2>&1 &
 nohup ./pressure_give  127.0.0.1/linker 12000 6000 >out2.log 2>&1 &
