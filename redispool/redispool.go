@@ -81,6 +81,7 @@ func (self *RedisPool) rmTimeout(rs *[]*RedisEntry) bool {
 	// 每次只检查一个最老的超时
 	if len(*rs) > 0 && (time.Now().Unix()-(*rs)[0].stamp) > TIMEOUT_INTV {
 		slog.Infof("%s rm timeout:%s", fun, (*rs)[0])
+		(*rs)[0].close()
 		*rs = (*rs)[1:]
 		return true
 	} else {
