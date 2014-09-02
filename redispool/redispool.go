@@ -15,6 +15,10 @@ import (
 	"PushServer/slog"
 )
 
+const (
+	TIMEOUT_INTV int = 120
+)
+
 type RedisEntry struct {
 	client *redis.Client
 	addr string
@@ -68,6 +72,11 @@ func (self *RedisPool) add(addr string) (*RedisEntry, error) {
 	}
 
 	return en, nil
+
+
+}
+
+func (self *RedisPool) rmTimeout([]*RedisEntry) {
 
 
 }
@@ -132,24 +141,38 @@ func (self *RedisPool) get(addr string) (*RedisEntry, error) {
 
 
 // 只对一个redis执行命令
-func (self *RedisPool) CmdSingle(addr string, cmd []interface{}) *redis.Reply {
-	fun := "RedisPool.CmdSingle"
+func (self *RedisPool) CmdSingleRetry(addr string, cmd []interface{}, retrytimes int) *redis.Reply {
+	fun := "RedisPool.CmdSingleRetry"
 	c, err := self.get(addr)
 	if err != nil {
-		es := fmt.Sprintf("get conn addr:%s err:%s", addr, err)
+		es := fmt.Sprintf("get conn retrytimes:%d addr:%s err:%s", retrytimes, addr, err)
 		slog.Infoln(fun, es)
 		return &redis.Reply{Type: redis.ErrorReply, Err:errors.New(es)}
 	}
 
 	rp := c.Cmd(cmd)
 	if rp.Type == redis.ErrorReply {
-		slog.Errorf("%s redis Cmd error %s", fun, rp)
+		slog.Errorf("%s redis Cmd try:%d error %s", fun, retrytimes, rp)
+		if rp.String() == "EOF" {
+			if retrytimes > 0 {
+				return rp
+			}
+			// redis 连接timeout，重试一次
+			return self.CmdSingleRetry(addr, cmd, retrytimes+1)
+		}
+
+
 		c.close()
 	} else {
 		self.payback(addr, c)
 	}
 
 	return rp
+
+}
+
+func (self *RedisPool) CmdSingle(addr string, cmd []interface{}) *redis.Reply {
+	return self.CmdSingleRetry(addr, cmd, 0)
 
 }
 
