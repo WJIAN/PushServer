@@ -20,6 +20,7 @@ import (
 // my lib
 import (
 	"PushServer/slog"
+	"PushServer/connutil"
 
 )
 
@@ -225,7 +226,11 @@ func writeRestErr(w http.ResponseWriter, err string) {
 
 func route(w http.ResponseWriter, r *http.Request) {
 	fun := "rest.route"
-	slog.Infof("%s %s", fun, r.URL.Path)
+
+	stat := connutil.NewTimeStat(fmt.Sprintf("%s %s", fun, r.URL.Path))
+	defer stat.Stat()
+
+	//slog.Infof("%s %s", fun, r.URL.Path)
 
 	//js, _ := json.Marshal(&map[string]string{"heart": "300", "ip": "42.120.4.112", "port":"9988"})
 	fmt.Fprintf(w, "%s", gGenServConfig.linkerConfig)
@@ -236,8 +241,10 @@ func route(w http.ResponseWriter, r *http.Request) {
 
 func installid(w http.ResponseWriter, r *http.Request) {
 	fun := "rest.installid"
+	stat := connutil.NewTimeStat(fmt.Sprintf("%s %s", fun, r.URL.Path))
+	defer stat.Stat()
 
-	slog.Infof("%s %s", fun, r.URL.Path)
+	//slog.Infof("%s %s", fun, r.URL.Path)
 
 	uuidgen := uuid.NewUUID()
 	installid := uuidgen.String()
@@ -254,6 +261,9 @@ func installid(w http.ResponseWriter, r *http.Request) {
 // Data: bussiness protobuf
 func inpush(w http.ResponseWriter, r *http.Request) {
 	fun := "rest.inpush"
+	stat := connutil.NewTimeStat(fmt.Sprintf("%s %s", fun, r.URL.Path))
+	defer stat.Stat()
+
 	//debug_show_request(r)
 	if r.Method != "POST" {
 		//writeRestErr(w, "method err")
@@ -261,7 +271,7 @@ func inpush(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	slog.Infof("%s %s", fun, r.URL.Path)
+	//slog.Infof("%s %s", fun, r.URL.Path)
 	path := strings.Split(r.URL.Path, "/")
 	//slog.Info("%q", path)
 
@@ -303,6 +313,10 @@ func inpush(w http.ResponseWriter, r *http.Request) {
 // Data: push data
 func push(w http.ResponseWriter, r *http.Request) {
 	fun := "rest.push"
+
+	stat := connutil.NewTimeStat(fmt.Sprintf("%s %s", fun, r.URL.Path))
+	defer stat.Stat()
+
 	//debug_show_request(r)
 	if r.Method != "POST" {
 		//writeRestErr(w, "method err")
@@ -310,7 +324,7 @@ func push(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	slog.Infof("%s %s", fun, r.URL.Path)
+	//slog.Infof("%s %s", fun, r.URL.Path)
 	path := strings.Split(r.URL.Path, "/")
 	//slog.Info("%q", path)
 

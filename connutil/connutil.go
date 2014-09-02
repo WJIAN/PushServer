@@ -1,5 +1,11 @@
 package connutil
 
+import (
+	"time"
+
+
+	"PushServer/slog"
+)
 
 type ConnStateType int32
 
@@ -50,3 +56,21 @@ func (self ConnStateType) String() string {
 	return s
 }
 
+
+type runTimeStat struct {
+	logkey string
+	stamp int64
+}
+
+func (self *runTimeStat) Stat() {
+
+	slog.Infof("%s RUNTIME:%d", self.logkey, time.Now().UnixNano()-self.stamp)
+
+}
+
+func NewTimeStat(key string) *runTimeStat {
+	return &runTimeStat {
+		logkey: key,
+		stamp: time.Now().UnixNano(),
+	}
+}

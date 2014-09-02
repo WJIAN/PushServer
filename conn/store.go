@@ -14,11 +14,13 @@ import (
 	"PushServer/redispool"
 	"PushServer/slog"
 	"PushServer/util"
+	"PushServer/connutil"
 
 )
 
 
 type LuaDo struct {
+	file string
 	hash string
 	data [] byte
 
@@ -69,7 +71,7 @@ func loadLuaFile(path string, file string) *LuaDo {
 
 	slog.Infof("loadLuaFile sha1:%s file:%s", hex, fp)
 
-	return &LuaDo{hex, data}
+	return &LuaDo{file, hex, data}
 
 }
 
@@ -143,6 +145,11 @@ func (self *Store) doCmd(luado *LuaDo, mcmd map[string][]interface{}) map[string
 
 func (self *Store) doCmdSingle(luado *LuaDo, addr string, cmd []interface{}) *redis.Reply {
 	fun := "Store.doCmdSingle"
+
+
+	stat := connutil.NewTimeStat(fmt.Sprintf("%s lua:%s", fun, luado.file))
+	defer stat.Stat()
+
 
 	slog.Debugln(fun, "cmd:", cmd)
 

@@ -19,6 +19,7 @@ import (
 	"PushServer/slog"
 	"PushServer/pb"
 	"PushServer/util"
+	"PushServer/connutil"
 )
 
 
@@ -68,6 +69,11 @@ func (self *ConnectionManager) delClient(client_id string, addr string) {
 func (self *ConnectionManager) sendDirect(client_id string, msgid uint64, spb[]byte) (uint64, string) {
 
 	fun := "ConnectionManager.sendDirect"
+
+	stat := connutil.NewTimeStat(fun)
+	defer stat.Stat()
+
+
 
 	if v, ok := self.clients[client_id]; ok {
 		//return msgid, v.SendBussiness(msgid, ziptype, datatype, data)

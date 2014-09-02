@@ -2,7 +2,7 @@ package connection
 
 // base lib
 import (
-//	"fmt"
+	"fmt"
 	"time"
 //	"log"
 	//"crypto/sha1"
@@ -18,6 +18,7 @@ import (
 import (
 	"PushServer/pb"
 	"PushServer/util"
+	"PushServer/connutil"
 	"PushServer/slog"
 
 )
@@ -268,6 +269,7 @@ func (self *Client) recvSYN(pb *pushproto.Talk) {
 
 func (self *Client) proto(data []byte) {
 	fun := "Client.proto"
+
 	pb := &pushproto.Talk{}
 	err := proto.Unmarshal(data, pb)
 	if err != nil {
@@ -275,6 +277,10 @@ func (self *Client) proto(data []byte) {
 		self.errNotifyCLOSED("package unmarshaling error")
 		return
 	}
+
+	stat := connutil.NewTimeStat(fmt.Sprintf("%s %s", fun, pb.GetType()))
+	defer stat.Stat()
+
 
 	slog.Debugf("%s client:%s recv proto: %s", fun, self, pb)
 	pb_type := pb.GetType()
