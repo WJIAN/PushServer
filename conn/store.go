@@ -3,7 +3,7 @@ package connection
 
 import (
 	"fmt"
-	"errors"
+//	"errors"
 	"time"
 	"crypto/sha1"
 	"strconv"
@@ -165,59 +165,52 @@ func (self *Store) doCmdSingle(luado *LuaDo, addr string, cmd []interface{}) *re
 }
 
 
-func (self *Store) recvMsg(cid string, msgid uint64) (bool, error) {
-	//fun := "Store.recvMsg"
+func (self *Store) recvMsg(cli *Client, msgid uint64) (bool, error) {
+	fun := "Store.recvMsg"
 	lua := self.lua_recvmsg
     cmd0 := []interface{}{
 		"evalsha", lua.hash,
 		1,
-		cid,
+		cli.client_id,
 
 		msgid,
 		time.Now().Unix(),
 	}
 
+	addr := self.hashRedis(cli.client_id)
+	rp := self.doCmdSingle(lua, addr, cmd0)
 
-	mcmd := make(map[string][]interface{})
-    mcmd[self.hashRedis(cid)] = cmd0
-
-
-	rp := self.doCmd(lua, mcmd)
-
-
-	for _, r := range(rp) {
-		isdup, err := r.Int()
-		if err != nil {
-			//slog.Errorf("%s err:%s", fun, err)
-			return true, err
-		}
-
-		if isdup == 1 {
-			return true, nil
-		} else {
-			return false, nil
-		}
+	isdup, err := rp.Int()
+	if err != nil {
+		slog.Errorf("%s client:%s addr:%s err:%s", fun, cli, addr, err)
+		return true, err
 	}
 
-	return true, errors.New("redis access error")
+	if isdup == 1 {
+		return true, nil
+	} else {
+		return false, nil
+	}
 
 }
 
-func (self *Store) rmMsg(cid string, msgid uint64) {
+func (self *Store) rmMsg(cli *Client, msgid uint64) {
+	fun := "Store.rmMsg"
 	lua := self.lua_rmmsg
     cmd0 := []interface{}{
 		"evalsha", lua.hash,
 		1,
-		cid,
+		cli.client_id,
 		msgid,
 	}
 
+	addr := self.hashRedis(cli.client_id)
+	rp := self.doCmdSingle(lua, addr, cmd0)
 
-	mcmd := make(map[string][]interface{})
-    mcmd[self.hashRedis(cid)] = cmd0
+	if rp.Type == redis.ErrorReply {
+		slog.Errorf("%s client:%s addr:%s rp:%s", fun, cli, addr, rp)
 
-
-	self.doCmd(lua, mcmd)
+	}
 
 
 }
@@ -235,30 +228,24 @@ func (self *Store) addMsg(cid string, msgid uint64, pb[]byte) string {
 		time.Now().Unix(),
 	}
 
-
-	mcmd := make(map[string][]interface{})
-    mcmd[self.hashRedis(cid)] = cmd0
-
-
-	rp := self.doCmd(lua, mcmd)
-
-	for _, r := range(rp) {
-		rvs, err := r.Str()
-		if err != nil {
-			slog.Errorf("%s err:%s", fun, err)
-			return "ERRACCESS"
-		} else {
-			return rvs
-		}
+	addr := self.hashRedis(cid)
+	rp := self.doCmdSingle(lua, addr, cmd0)
 
 
+	rvs, err := rp.Str()
+	if err != nil {
+		slog.Errorf("%s cid:%s addr:%s err:%s", fun, cid, addr, err)
+		return "ERRACCESS"
+	} else {
+		return rvs
 	}
-	return "NOTFOUND"
+
+
 }
 
 
 func (self *Store) heart(cli *Client) {
-	//fun := "Store.heart"
+	fun := "Store.heart"
 	lua := self.lua_heart
     cmd0 := []interface{}{
 		"evalsha", lua.hash,
@@ -274,19 +261,20 @@ func (self *Store) heart(cli *Client) {
 		cli.nettype,
 	}
 
+	addr := self.hashRedis(cli.client_id)
+	rp := self.doCmdSingle(lua, addr, cmd0)
 
-	mcmd := make(map[string][]interface{})
-    mcmd[self.hashRedis(cli.client_id)] = cmd0
+	if rp.Type == redis.ErrorReply {
+		slog.Errorf("%s client:%s addr:%s rp:%s", fun, cli, addr, rp)
 
-
-	self.doCmd(lua, mcmd)
+	}
 
 
 }
 
 
 func (self *Store) close(cli *Client) {
-	//fun := "Store.heart"
+	fun := "Store.close"
 	lua := self.lua_close
     cmd0 := []interface{}{
 		"evalsha", lua.hash,
@@ -298,11 +286,13 @@ func (self *Store) close(cli *Client) {
 	}
 
 
-	mcmd := make(map[string][]interface{})
-    mcmd[self.hashRedis(cli.client_id)] = cmd0
+	addr := self.hashRedis(cli.client_id)
+	rp := self.doCmdSingle(lua, addr, cmd0)
 
+	if rp.Type == redis.ErrorReply {
+		slog.Errorf("%s client:%s addr:%s rp:%s", fun, cli, addr, rp)
 
-	self.doCmd(lua, mcmd)
+	}
 
 
 }
@@ -326,35 +316,31 @@ func (self *Store) syn(cli *Client) (map[uint64][]byte, []uint64) {
 		cli.nettype,
 	}
 
-
-	mcmd := make(map[string][]interface{})
-    mcmd[self.hashRedis(cli.client_id)] = cmd0
-
-
-	rp := self.doCmd(lua, mcmd)
+	addr := self.hashRedis(cli.client_id)
+	rp := self.doCmdSingle(lua, addr, cmd0)
 
 	rv := make(map[uint64][]byte)
 	sortkeys := []uint64{}
-	for addr, r := range(rp) {
-		ms, err := r.List()
-		if err != nil {
-			slog.Errorf("%s addr:%s err:%s", fun, addr, err)
-			continue
-		}
 
+
+	ms, err := rp.List()
+	if err != nil {
+		slog.Errorf("%s client:%s addr:%s err:%s", fun, cli, addr, err)
+	} else {
 		for i:=0; i<len(ms); i+=2 {
 			msgid := ms[i]
 			msg := ms[i+1]
 			mid, err := strconv.ParseUint(msgid, 10, 64)
 			if err != nil {
-				slog.Errorf("%s msgid:%s err:%s", fun, msgid, err)
+				slog.Errorf("%s client:%s, msgid:%s err:%s", fun, cli, msgid, err)
 				continue
 			}
 			rv[mid] = []byte(msg)
 			sortkeys = append(sortkeys, mid)
 		}
-
 	}
+
+
 
 	//slog.Traceln(rv, sortkeys)
 

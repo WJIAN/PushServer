@@ -126,7 +126,7 @@ func (self *Client) sendBussRetry(msgid uint64, pb []byte) {
 				ed := util.Timestamp2014()
 				useTm := ed - bg
 				if v {
-					ConnStore.rmMsg(self.client_id, msgid)
+					ConnStore.rmMsg(self, msgid)
 					slog.Infof("%s client:%s recv ack msgid:%d senduse:%d msguse:%d", fun, self, msgid, useTm, ed/1000-(msgid>>22))
 				} else {
 					slog.Infof("%s client:%s close not recv ack msgid:%d senduse:%d", fun, self, msgid, useTm)
@@ -228,7 +228,7 @@ func (self *Client) recvBUSSINESS(pb *pushproto.Talk) {
 
 	self.sendACK(msgid)
 
-	isdup, err := ConnStore.recvMsg(self.client_id, msgid)
+	isdup, err := ConnStore.recvMsg(self, msgid)
 	if err != nil {
 		slog.Fatalf("%s client:%s set recvMsg error:%s", fun, self, err)
 		return
