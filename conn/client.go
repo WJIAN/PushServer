@@ -14,6 +14,7 @@ import (
 	//"crypto/sha1"
 	"crypto/md5"
 	"sync"
+	"strings"
 )
 
 // ext lib
@@ -124,7 +125,10 @@ func (self *Client) chgESTABLISHED(pb *pushproto.Talk) bool {
 
 	appid := pb.GetAppid()
 	installid := pb.GetInstallid()
-	nettype := pb.GetNettype()
+	// 转换大写
+	nettype := strings.ToUpper(pb.GetNettype())
+	// 空格替换
+	nettype = strings.Replace(nettype, " ", "*", -1)
 	sec := gServConfig.CidSecret
 
 	self.appid = appid

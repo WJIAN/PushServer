@@ -341,7 +341,7 @@ func (m *userClient) syn() error {
 		Auth: proto.String("Fuck"),
 		Clienttype: proto.String("Android"),
 		Clientver: proto.String("1.0.0"),
-		Nettype: proto.String("WLAN"),
+		Nettype: proto.String("WLAN:Test . A"),
 
 	}
 
