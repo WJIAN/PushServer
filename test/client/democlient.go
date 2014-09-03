@@ -261,6 +261,15 @@ func (m *userClient) heart() error {
 
 func (m *userClient) recvBuss(ziptype int32, datatype int32,  data []byte) {
 	fun := "userClient.recvBuss"
+	if ziptype == 1 {
+		data2, err := util.UngzipBytes(data)
+		if err != nil {
+			slog.Errorf("%s client:%s errunzip:%s recv buss zip:%d dtype:%d data:%s", fun, m, err, ziptype, datatype, data)
+			return
+		}
+		slog.Infof("%s client:%s unzip zip:%d dtype:%d zip:%d unzip:%d", fun, m, ziptype, datatype, len(data), len(data2))
+		data = data2
+	}
 	slog.Infof("%s client:%s recv buss zip:%d dtype:%d data:%s", fun, m, ziptype, datatype, data)
 
 }
@@ -279,6 +288,25 @@ func (m *userClient) SendBuss(ziptype int32, datatype int32, data []byte) error 
 		slog.Fatalf("%s client:%s get msgid error:%s", fun, m, err)
 		return err
 	}
+
+
+	if ziptype == 1 {
+		zipdata, err := util.GzipBytes(data)
+		if err != nil {
+			slog.Errorf("%s client:%s msgid:%d ziperr:%s", fun, m, msgid, err)
+			return err
+		}
+		slog.Infof("%s client:%s msgid:%d bzip:%d zip:%d", fun, m, msgid, len(data), len(zipdata))
+		if len(data) <= len(zipdata) {
+			// 压了还不如不压，就不压了
+			ziptype = 0
+		} else {
+			data = zipdata
+		}
+
+	}
+
+
 
 	pb := &pushproto.Talk {
 		Type: pushproto.Talk_BUSSINESS.Enum(),

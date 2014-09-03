@@ -95,10 +95,26 @@ func (self *ConnectionManager) Send(client_id string, ziptype int32, datatype in
 	msgid, err := self.Msgid()
 	if err != nil {
 		slog.Fatalf("%s cid:%s get msgid error:%s", fun, client_id, err)
-		return 0, "gen msgid error"
+		return 0, "ERRGENMSGID"
 	}
 
 	slog.Infof("%s cid:%s msgid:%d zip:%d datatype:%d data:%s", fun, client_id, msgid, ziptype, datatype, data)
+
+	if ziptype == 1 {
+		zipdata, err := util.GzipBytes(data)
+		if err != nil {
+			slog.Warnf("%s cid:%s msgid:%d ziperr:%s", fun, client_id, msgid, err)
+			return 0, "ERRZIP"
+		}
+		slog.Infof("%s cid:%s msgid:%d bzip:%d zip:%d", fun, client_id, msgid, len(data), len(zipdata))
+		if len(data) <= len(zipdata) {
+			// 压了还不如不压，就不压了
+			ziptype = 0
+		} else {
+			data = zipdata
+		}
+
+	}
 
 
 	buss := &pushproto.Talk {

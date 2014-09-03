@@ -241,8 +241,22 @@ func (self *Client) recvBUSSINESS(pb *pushproto.Talk) {
 		slog.Infof("%s client:%s recv dup msgid:%d", fun, self, msgid)
 
 	} else {
+		ziptype := pb.GetZiptype()
+		datatype := pb.GetDatatype()
+		data := pb.GetBussdata()
+
+		if ziptype == 1 {
+			data2, err := util.UngzipBytes(data)
+			if err != nil {
+				slog.Warnf("%s client:%s errunzip:%s recv buss zip:%d dtype:%d data:%s", fun, self, err, ziptype, datatype, data)
+				return
+			}
+			slog.Infof("%s client:%s unzip zip:%d dtype:%d zip:%d unzip:%d", fun, self, ziptype, datatype, len(data), len(data2))
+			data = data2
+		}
+
 		// 转发到业务层, 先打印个log
-		slog.Infof("%s client:%s recv buss zip:%d dtype:%d data:%s", fun, self, pb.GetZiptype(), pb.GetDatatype(), pb.GetBussdata())
+		slog.Infof("%s client:%s recv buss zip:%d dtype:%d data:%s", fun, self, ziptype, datatype, data)
 	}
 
 }

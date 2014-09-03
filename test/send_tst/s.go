@@ -21,7 +21,7 @@ func main() {
 
 	cn := 0
 	for {
-		err := cli.SendBuss(0, 0, []byte(fmt.Sprintf("SN:%d 牛逼不是吹的", cn)))
+		err := cli.SendBuss(1, 0, []byte(fmt.Sprintf("SN:%d 牛逼不是吹的牛逼不是吹的牛逼不是吹的牛逼不是吹的", cn)))
 		if err != nil {
 			slog.Errorln("SendBuss err", err)
 		}

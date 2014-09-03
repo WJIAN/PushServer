@@ -9,7 +9,8 @@ import (
 	"strings"
 	"errors"
 	"hash/fnv"
-
+	"compress/gzip"
+	"bytes"
 	"fmt"
 )
 
@@ -121,6 +122,44 @@ func Strhash(s string) uint32 {
     h := fnv.New32a()
     h.Write([]byte(s))
     return h.Sum32()
+}
+
+func GzipBytes(bs []byte) ([]byte, error) {
+	var b bytes.Buffer
+	w := gzip.NewWriter(&b)
+	n, err := w.Write(bs)
+	if err != nil {
+		return nil, err
+	}
+
+	w.Close()
+
+	if n != len(bs) {
+		return nil, errors.New("gzip incomplete")
+	}
+
+	return b.Bytes(), nil
+
+}
+
+
+func UngzipBytes(bs []byte) ([]byte, error) {
+	r, err := gzip.NewReader(bytes.NewReader(bs))
+
+	if err != nil {
+		return nil, err
+	}
+	defer r.Close()
+
+	b, err := ioutil.ReadAll(r)
+	if err != nil {
+		return nil, err
+	}
+
+
+	return b, nil
+
+
 }
 
 
