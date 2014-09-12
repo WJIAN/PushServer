@@ -86,13 +86,18 @@ func tst_redis_timeout() {
 	pool := redispool.NewRedisPool()
 	log.Println(1, pool)
 
-	tstSingle(pool)
+	go tstSingle(pool)
+	go tstSingle(pool)
+	go tstSingle(pool)
+	go tstSingle(pool)
 
+	time.Sleep(time.Second * time.Duration(1))
 	log.Println(2, pool)
 
 	// wait timeout
 	time.Sleep(time.Second * time.Duration(12))
 
+	tstSingle(pool)
 	tstSingle(pool)
 
 	log.Println(3, pool)

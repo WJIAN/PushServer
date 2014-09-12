@@ -91,7 +91,7 @@ func (self *RedisPool) rmTimeout(rs *[]*RedisEntry) bool {
 }
 
 func (self *RedisPool) getCache(addr string) *RedisEntry {
-	//fun := "RedisPool.getCache"
+	fun := "RedisPool.getCache"
 	//slog.Traceln(fun, "call", addr, self)
 
 	self.mu.Lock()
@@ -106,9 +106,20 @@ func (self *RedisPool) getCache(addr string) *RedisEntry {
 		} else {
 			tmp := rs[len(rs)-1]
 			self.clipool[addr] = rs[:len(rs)-1]
-			// 更新使用时间戳
-			tmp.stamp = time.Now().Unix()
-			return tmp
+
+			nowstp := time.Now().Unix()
+			if nowstp - tmp.stamp > TIMEOUT_INTV {
+				// 对于超时的连接不再使用
+				slog.Infof("%s rm timeout:%s", fun, tmp)
+				tmp.close()
+				return nil
+			} else {
+				// 更新使用时间戳
+				tmp.stamp = nowstp
+				return tmp
+
+			}
+
 		}
 
 	} else {
