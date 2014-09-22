@@ -90,80 +90,151 @@ func (self *logger) Panicln(v ...interface{}) {
 	self.per.Panicln(v...)
 }
 
+// log 级别
+const (
+	LV_TRACE int = 0
+	LV_DEBUG int = 1
+	LV_INFO int = 2
+	LV_WARN int = 3
+	LV_ERROR int = 4
+	LV_FATAL int = 5
+	LV_PANIC int = 6
+
+
+)
 
 
 
 var (
+	log_level int
 	lg *logger
 )
 
-func Init(pref string) {
-    lg = &logger{logpref: pref, logfp: nil, per: nil}
+func Init(logdir string, logpref string, level string) {
+	if level == "TRACE" {
+		log_level = LV_TRACE
+	} else if level == "DEBUG" {
+		log_level = LV_DEBUG
+	} else if level == "INFO" {
+		log_level = LV_INFO
+	} else if level == "WARN" {
+		log_level = LV_WARN
+	} else if level == "ERROR" {
+		log_level = LV_ERROR
+	} else if level == "FATAL" {
+		log_level = LV_FATAL
+	} else if level == "PANIC" {
+		log_level = LV_PANIC
+	} else {
+		log_level = LV_INFO
+	}
+
+	if logdir != "" {
+		err := os.MkdirAll(logdir, 0777)
+		if err != nil {
+			log.Fatalln("slog mkdir ", logdir, " err:", err)
+		}
+	}
+
+	logfile := ""
+	if logdir != "" && logpref != "" {
+		logfile = logdir+"/"+logpref
+	}
+
+    lg = &logger{logpref: logfile, logfp: nil, per: nil}
 
 }
 
 
 func Tracef(format string, v ...interface{}) {
-	lg.Printf("[TRACE] "+format, v...)
+	if LV_TRACE >= log_level {
+		lg.Printf("[TRACE] "+format, v...)
+	}
 }
 
 func Traceln(v ...interface{}) {
-	lg.Println(append([]interface{}{"[TRACE]"}, v...)...)
+	if LV_TRACE >= log_level {
+		lg.Println(append([]interface{}{"[TRACE]"}, v...)...)
+	}
 }
 
 
 func Debugf(format string, v ...interface{}) {
-	lg.Printf("[DEBUG] "+format, v...)
+	if LV_DEBUG >= log_level {
+		lg.Printf("[DEBUG] "+format, v...)
+	}
 }
 
 func Debugln(v ...interface{}) {
-	lg.Println(append([]interface{}{"[DEBUG]"}, v...)...)
+	if LV_DEBUG >= log_level {
+		lg.Println(append([]interface{}{"[DEBUG]"}, v...)...)
+	}
 }
 
 
 func Infof(format string, v ...interface{}) {
-	lg.Printf("[INFO] "+format, v...)
+	if LV_INFO >= log_level {
+		lg.Printf("[INFO] "+format, v...)
+	}
 }
 
 func Infoln(v ...interface{}) {
-	lg.Println(append([]interface{}{"[INFO]"}, v...)...)
+	if LV_INFO >= log_level {
+		lg.Println(append([]interface{}{"[INFO]"}, v...)...)
+	}
 }
 
 
 func Warnf(format string, v ...interface{}) {
-	lg.Printf("[WARN] "+format, v...)
+	if LV_WARN >= log_level {
+		lg.Printf("[WARN] "+format, v...)
+	}
 }
 
 func Warnln(v ...interface{}) {
-	lg.Println(append([]interface{}{"[WARN]"}, v...)...)
+	if LV_WARN >= log_level {
+		lg.Println(append([]interface{}{"[WARN]"}, v...)...)
+	}
 }
 
 
 func Errorf(format string, v ...interface{}) {
-	lg.Printf("[ERROR] "+format, v...)
+	if LV_ERROR >= log_level {
+		lg.Printf("[ERROR] "+format, v...)
+	}
 }
 
 func Errorln(v ...interface{}) {
-	lg.Println(append([]interface{}{"[ERROR]"}, v...)...)
+	if LV_ERROR >= log_level {
+		lg.Println(append([]interface{}{"[ERROR]"}, v...)...)
+	}
 }
 
 
 
 func Fatalf(format string, v ...interface{}) {
-	lg.Printf("[FATAL] "+format, v...)
+	if LV_FATAL >= log_level {
+		lg.Printf("[FATAL] "+format, v...)
+	}
 }
 
 
 func Fatalln(v ...interface{}) {
-	lg.Println(append([]interface{}{"[FATAL]"}, v...)...)
+	if LV_FATAL >= log_level {
+		lg.Println(append([]interface{}{"[FATAL]"}, v...)...)
+	}
 }
 
 
 func Panicf(format string, v ...interface{}) {
-	lg.Panicf("[PANIC] "+format, v...)
+	if LV_PANIC >= log_level {
+		lg.Panicf("[PANIC] "+format, v...)
+	}
 }
 
 
 func Panicln(v ...interface{}) {
-	lg.Panicln(append([]interface{}{"[PANIC]"}, v...)...)
+	if LV_PANIC >= log_level {
+		lg.Panicln(append([]interface{}{"[PANIC]"}, v...)...)
+	}
 }

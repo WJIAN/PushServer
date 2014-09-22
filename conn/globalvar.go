@@ -15,7 +15,8 @@ type ServConfig struct {
 	// ---- 没有默认值的配置 -----
 	ServId uint32          // 服务id，不同的副本需要不同，该id在msgid生成会使用到
 	CidSecret string       // client id 生成加密字符串
-	LogFile string         // 服务器log名称, 不提供则输出到标准输出
+	LogDir string         // 服务器log文件夹名称, 不存在直接创建。不提供则输出到标准输出
+	LogLevel string        // log级别控制 7个级别 TRACE DEBUG INFO WARN ERROR FATAL PANIC
 	LuaPath string         // 存取使用的lua脚本位置
 
 	RedisAddr []string     // 使用的redis 地址列表
@@ -87,10 +88,11 @@ type GenServConfig struct {
 
 
 func (m *ServConfig) String() string {
-	return fmt.Sprintf("ServId:%d CidSecret:%s LogFile:%s LuaPath:%s RedisAddr:%s RouterHost:%s RestPort:%d HeartIntv:%d ReadTimeoutScale:%d WriteTimeoutScale:%d ConnPort:%d AckTimeout:%d",
+	return fmt.Sprintf("ServId:%d CidSecret:%s LogDir:%s LogLevel:%s LuaPath:%s RedisAddr:%s RouterHost:%s RestPort:%d HeartIntv:%d ReadTimeoutScale:%d WriteTimeoutScale:%d ConnPort:%d AckTimeout:%d",
 		m.ServId,
 		m.CidSecret,
-		m.LogFile,
+		m.LogDir,
+		m.LogLevel,
 		m.LuaPath,
 
 		m.RedisAddr,
@@ -180,8 +182,14 @@ func Power(cfg []byte) {
 	log.Println(gServConfig)
 
 	// log out init
-	logFile := gServConfig.LogFile
-	slog.Init(logFile)
+	logDir := gServConfig.LogDir
+	logpref := ""
+	if logDir != "" {
+		logDir = fmt.Sprintf("%s%d", logDir, gServConfig.ServId)
+		logpref = "linker"
+	}
+
+	slog.Init(logDir, logpref, gServConfig.LogLevel)
 
 	slog.Infof("cfg:%s", cfg)
 	slog.Infoln("gServConfig", gServConfig)

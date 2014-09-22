@@ -21,8 +21,8 @@ import (
 
 type config struct {
 	HttpPort int32
-
-	LogFile string
+	LogLevel string
+	LogDir string
 
 }
 
@@ -45,8 +45,13 @@ func main() {
 
 
 	// log out init
-	logFile := cfg.LogFile
-	slog.Init(logFile)
+	logDir := cfg.LogDir
+	logpref := ""
+	if logDir != "" {
+		logpref = "router"
+	}
+
+	slog.Init(logDir, logpref, cfg.LogLevel)
 
 
 

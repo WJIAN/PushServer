@@ -11,7 +11,7 @@ import (
 
 
 func main() {
-	slog.Init("")
+	slog.Init("", "", "TRACE")
 	router := os.Args[1]
 
 
