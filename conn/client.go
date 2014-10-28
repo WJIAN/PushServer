@@ -28,7 +28,7 @@ import (
 
 	"PushServer/util"
 	"PushServer/pb"
-	"PushServer/slog"
+	"github.com/shawnfeng/slog"
 
 )
 

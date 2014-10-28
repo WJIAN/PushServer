@@ -12,6 +12,7 @@ import (
 import (
 	//"code.google.com/p/go-uuid/uuid"
 	"code.google.com/p/goprotobuf/proto"
+	"github.com/shawnfeng/slog"
 )
 
 // my lib
@@ -19,7 +20,6 @@ import (
 	"PushServer/pb"
 	"PushServer/util"
 	"PushServer/connutil"
-	"PushServer/slog"
 
 )
 

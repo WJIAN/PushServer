@@ -13,10 +13,10 @@ import (
 
 	"github.com/sdming/gosnow"
 	"code.google.com/p/goprotobuf/proto"
+	"github.com/shawnfeng/slog"
 
 
 
-	"PushServer/slog"
 	"PushServer/pb"
 	"PushServer/util"
 	"PushServer/connutil"

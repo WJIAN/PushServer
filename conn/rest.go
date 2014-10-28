@@ -14,12 +14,12 @@ import (
 
 	"code.google.com/p/go-uuid/uuid"
 
+	"github.com/shawnfeng/slog"
 )
 
 
 // my lib
 import (
-	"PushServer/slog"
 	"PushServer/connutil"
 
 )
