@@ -178,9 +178,13 @@ func (self *ConnectionManager) setOffline() {
 	self.offline = true
 	DorestDellinker(gGenServConfig.linker)
 
-    for _, v := range self.clients {
-		v.sendREROUTE()
-	}
+	// 不主动发送reroute协议，防止雪崩
+	// reroute发生在用户后面的请求中，只要有
+	// 用户请求上来就会附带回复reroute协议，例如心跳
+	// 让客户端主动放弃连接，平滑的完成linker的切换任务
+    //for _, v := range self.clients {
+	//	v.sendREROUTE()
+	//}
 
 }
 
