@@ -79,12 +79,12 @@ func (self *Client) sendSYNACK(client_id string) {
 }
 
 func (self *Client) sendHEART() {
-	fun := "Client.sendHEART"
+	//fun := "Client.sendHEART"
 	synack := &pushproto.Talk{
 		Type: pushproto.Talk_HEART.Enum(),
 	}
 
-	slog.Debugf("%s client:%s msg:%s", fun, self, synack)
+	//slog.Debugf("%s client:%s msg:%s", fun, self, synack)
 
 	data, _ := proto.Marshal(synack)
 	self.Send(util.Packdata(data))

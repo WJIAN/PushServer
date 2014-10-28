@@ -295,7 +295,7 @@ func (self *Client) Recv() {
 
 	isclose, err := util.PackageSplit(self.conn, gServConfig.HeartIntv * gServConfig.ReadTimeoutScale, self.proto)
 	if err != nil {
-		slog.Warnf("%s client:%s packageSplit isclose:%t error: %s", fun, self, isclose, err)
+		slog.Warnf("%s client:%s packageSplit isclose:%t error:%s", fun, self, isclose, err)
 		if !isclose {
 			errmsg = err.Error()
 		}

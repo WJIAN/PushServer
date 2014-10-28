@@ -200,7 +200,7 @@ func PackageSplit(conn net.Conn, readtimeout int, readCall func([]byte)) (bool, 
 			    pacLen, sz := binary.Uvarint(packBuff[:bufLen])
 				if sz < 0 {
 					//slog.Warnf("%s client:%s package head error:%s", fun, self, packBuff[:bufLen])
-					return false, errors.New(fmt.Sprintf("package head error var:%s", packBuff[:bufLen]))
+					return false, errors.New(fmt.Sprintf("package head error var:%v", packBuff[:bufLen]))
 				} else if sz == 0 {
 				    break
 				}
@@ -209,9 +209,9 @@ func PackageSplit(conn net.Conn, readtimeout int, readCall func([]byte)) (bool, 
 				// must < 5K
 				if pacLen > 1024 * 5 {
 					//slog.Warnf("%s client:%s package too long error:%s", fun, self, packBuff[:bufLen])
-					return false, errors.New("package too long")
+					return false, errors.New(fmt.Sprintf("package too long var:%v", packBuff[:bufLen]))
 				} else if pacLen == 0 {
-					return false, errors.New("package len 0")
+					return false, errors.New(fmt.Sprintf("package len 0 var:%v", packBuff[:bufLen]))
 
 				}
 
@@ -220,7 +220,7 @@ func PackageSplit(conn net.Conn, readtimeout int, readCall func([]byte)) (bool, 
 				    pad := packBuff[apacLen-1]
 					if pad != 0 {
 						//slog.Warnf("%s client:%s package pad error:%s", fun, self, packBuff[:bufLen])
-						return false, errors.New("package pad error")
+						return false, errors.New(fmt.Sprintf("package pad error var:%v", packBuff[:bufLen]))
 					}
 				    //self.proto(packBuff[sz:apacLen-1])
 					readCall(packBuff[sz:apacLen-1])
