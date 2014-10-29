@@ -250,6 +250,14 @@ func (self *Store) addMsg(cid string, msgid uint64, pb[]byte) string {
 
 }
 
+// 连接在redis里面失效的时间
+// 正常close时候，连接会及时失效
+// 这个timeout是一个兜底的时间，比时间连接
+// 的readdeadline长5秒
+func (self *Store) connTimeout() int64 {
+	return time.Now().Unix()+int64(gServConfig.HeartIntv*gServConfig.ReadTimeoutScale)+5
+}
+
 
 func (self *Store) heart(cli *Client) {
 	fun := "Store.heart"
@@ -260,7 +268,7 @@ func (self *Store) heart(cli *Client) {
 		cli.client_id,
 
 		self.restAddr,
-		time.Now().Unix(),
+		self.connTimeout(),
 
 		cli.remoteaddr,
 		cli.appid,
@@ -315,7 +323,7 @@ func (self *Store) syn(cli *Client) (map[uint64][]byte, []uint64) {
 		cli.client_id,
 
 		self.restAddr,
-		time.Now().Unix(),
+		self.connTimeout(),
 
 		cli.remoteaddr,
 		cli.appid,

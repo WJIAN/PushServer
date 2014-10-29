@@ -6,7 +6,7 @@ local smk = 'SM.'..cid
 
 redis.call('HMSET', ck,
                   'restaddr', ARGV[1],
-                  'timeout', ARGV[2]+600,
+                  'timeout', ARGV[2],
 
                   'remote', ARGV[3],
                   'appid', ARGV[4],
