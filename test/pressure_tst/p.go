@@ -5,7 +5,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/shawnfeng/slog"
+	"github.com/shawnfeng/sutil/slog"
 	"PushServer/test/client"
 )
 

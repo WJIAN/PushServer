@@ -16,6 +16,7 @@ import (
 
 
 	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/snetutil"
 )
 
 
@@ -55,39 +56,6 @@ func isInterReq(r *http.Request) bool {
 		return false
 	}
 
-}
-
-// Request.RemoteAddress contains port, which we want to remove i.e.:
-// "[::1]:58292" => "[::1]"
-func ipAddrFromRemoteAddr(s string) string {
-	idx := strings.LastIndex(s, ":")
-	if idx == -1 {
-		return s
-	}
-	return s[:idx]
-}
-
-func getIpAddress(r *http.Request) string {
-	fun := "getIpAddress"
-	hdr := r.Header
-	hdrRealIp := hdr.Get("X-Real-Ip")
-	hdrForwardedFor := hdr.Get("X-Forwarded-For")
-
-	slog.Infof("%s X-Real-Ip:%s X-Forwarded-For:%s remoteadd:%s", fun, hdrRealIp, hdrForwardedFor, r.RemoteAddr)
-
-	if hdrRealIp == "" && hdrForwardedFor == "" {
-		return ipAddrFromRemoteAddr(r.RemoteAddr)
-	}
-	if hdrForwardedFor != "" {
-		// X-Forwarded-For is potentially a list of addresses separated with ","
-		parts := strings.Split(hdrForwardedFor, ",")
-		for i, p := range parts {
-			parts[i] = strings.TrimSpace(p)
-		}
-		// TODO: should return first non-local address
-		return parts[0]
-	}
-	return hdrRealIp
 }
 
 type ByString []string
@@ -139,7 +107,12 @@ func route(w http.ResponseWriter, r *http.Request) {
 	fun := "rest.route"
 
 	//remoteip := strings.Split(r.RemoteAddr, ":")
-	remoteip := getIpAddress(r)
+	slog.Infof("%s X-Real-Ip:%s X-Forwarded-For:%s remoteadd:%s",
+		fun,
+		r.Header.Get("X-Real-Ip"),
+		r.Header.Get("X-Forwarded-For"),
+		r.RemoteAddr)
+	remoteip := snetutil.IpAddressHttpClient(r)
 
 	slog.Infof("%s path:%s rm:%s", fun, r.URL.Path, remoteip)
 

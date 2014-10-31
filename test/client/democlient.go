@@ -17,7 +17,9 @@ import (
 //	"code.google.com/p/go-uuid/uuid"
 	"code.google.com/p/goprotobuf/proto"
 	"github.com/sdming/gosnow"
-	"github.com/shawnfeng/slog"
+
+	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/snetutil"
 
 	"PushServer/pb"
 	"PushServer/util"
@@ -226,7 +228,7 @@ func (m *userClient) send(pb *pushproto.Talk) error {
 	}
 
 
-	sb := util.Packdata(data)
+	sb := snetutil.Packdata(data)
 
 	m.send_lock.Lock()
 	defer m.send_lock.Unlock()
@@ -416,9 +418,9 @@ func (m *userClient) Power() {
 		m.changeState(State_SYN_SEND)
 
 		// hold here
-		isclose, err := util.PackageSplit(conn, 8*60, m.protoAns)
+		isclose, data, err := snetutil.PackageSplit(conn, 8*60, m.protoAns)
 		if err != nil {
-			slog.Errorf("%s conn read err:%s isclose:%t", fun, err, isclose)
+			slog.Errorf("%s conn read err:%s isclose:%t data:%v", fun, err, isclose, data)
 		}
 
 	}

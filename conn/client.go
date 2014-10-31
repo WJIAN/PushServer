@@ -26,9 +26,9 @@ import (
 import (
 	. "PushServer/connutil"
 
-	"PushServer/util"
 	"PushServer/pb"
 	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/snetutil"
 
 )
 
@@ -293,9 +293,10 @@ func (self *Client) Recv() {
 	defer self.deferErrNotifyCLOSED(&errmsg)
 
 
-	isclose, err := util.PackageSplit(self.conn, gServConfig.HeartIntv * gServConfig.ReadTimeoutScale, self.proto)
+	// 是否是read返回错误socket已经关闭，返回时候没有处理的数据，错误信息
+	isclose, data, err := snetutil.PackageSplit(self.conn, gServConfig.HeartIntv * gServConfig.ReadTimeoutScale, self.proto)
 	if err != nil {
-		slog.Warnf("%s client:%s packageSplit isclose:%t error:%s", fun, self, isclose, err)
+		slog.Warnf("%s client:%s packageSplit isclose:%t error:%s data:%v", fun, self, isclose, err, data)
 		if !isclose {
 			errmsg = err.Error()
 		}

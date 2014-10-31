@@ -13,6 +13,7 @@ import (
 	//"code.google.com/p/go-uuid/uuid"
 	"code.google.com/p/goprotobuf/proto"
 	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/snetutil"
 )
 
 // my lib
@@ -42,7 +43,7 @@ func (self *Client) errNotifyCLOSED(errmsg string) {
 
 	slog.Debugf("%s client:%s errmsg:%s", fun, self, errpb)
 	data, _ := proto.Marshal(errpb)
-	self.SendClose(util.Packdata(data))
+	self.SendClose(snetutil.Packdata(data))
 
 }
 
@@ -58,7 +59,7 @@ func (self *Client) sendREROUTE() {
 
 	slog.Debugf("%s client:%s pb:%s", fun, self, pb)
 	data, _ := proto.Marshal(pb)
-	self.Send(util.Packdata(data))
+	self.Send(snetutil.Packdata(data))
 
 }
 
@@ -74,7 +75,7 @@ func (self *Client) sendSYNACK(client_id string) {
 	slog.Debugf("%s client:%s msg:%s", fun, self, synack)
 
 	data, _ := proto.Marshal(synack)
-	self.Send(util.Packdata(data))
+	self.Send(snetutil.Packdata(data))
 
 }
 
@@ -87,7 +88,7 @@ func (self *Client) sendHEART() {
 	//slog.Debugf("%s client:%s msg:%s", fun, self, synack)
 
 	data, _ := proto.Marshal(synack)
-	self.Send(util.Packdata(data))
+	self.Send(snetutil.Packdata(data))
 
 	if self.client_id != "NULL" {
 		ConnStore.heart(self)
@@ -170,7 +171,7 @@ func (self *Client) sendBussRetry(msgid uint64, pb []byte) {
 
 func (self *Client) SendBussiness(msgid uint64, spb []byte) string {
 	fun := "Client.SendBussiness"
-	p := util.Packdata(spb)
+	p := snetutil.Packdata(spb)
 	self.sendBussRetry(msgid, p)
 
 	slog.Infof("%s client:%s send msgid:%d", fun, self, msgid)
@@ -218,7 +219,7 @@ func (self *Client) sendACK(msgid uint64) {
 	slog.Debugf("%s client:%s msg:%s", fun, self, pb)
 
 	data, _ := proto.Marshal(pb)
-	self.Send(util.Packdata(data))
+	self.Send(snetutil.Packdata(data))
 
 }
 
@@ -303,7 +304,7 @@ func (self *Client) proto(data []byte) {
 	if pb_type == pushproto.Talk_SYN {
 		self.recvSYN(pb)
 	} else if pb_type == pushproto.Talk_ECHO {
-		self.Send(util.Packdata(data))
+		self.Send(snetutil.Packdata(data))
 
 	} else if pb_type == pushproto.Talk_HEART {
 		self.sendHEART()

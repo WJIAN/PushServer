@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 
 	"github.com/shawnfeng/sutil/slog"
+	"github.com/shawnfeng/sutil/snetutil"
 
 	"PushServer/util"
 )
@@ -128,7 +129,7 @@ var ConnStore *Store
 var ConnManager *ConnectionManager
 
 func (self *GenServConfig) setrestHost() {
-	interIp, err := util.GetInterIp()
+	interIp, err := snetutil.GetInterIp()
 	if err != nil {
 		slog.Panicln("get local ip error")
 	}
@@ -143,11 +144,11 @@ func (self *GenServConfig) setLinker() {
 	fun := "GenServConfig.setLinker"
 
 
-	ip, err := util.GetExterIp()
+	ip, err := snetutil.GetExterIp()
 	if err != nil {
 		slog.Warnln("can not find outer ip", err)
 		// 没有外网ip，使用内网的
-		ip, err = util.GetInterIp()
+		ip, err = snetutil.GetInterIp()
 		if err != nil {
 			slog.Warnln("exter inter ip can not find", err)
 			// 都没有的使用本地ip
