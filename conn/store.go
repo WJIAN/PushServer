@@ -10,7 +10,7 @@ import (
 
 
 	"github.com/fzzy/radix/redis"
-	"github.com/shawnfeng/slog"
+	"github.com/shawnfeng/sutil/slog"
 
 	"PushServer/redispool"
 	"PushServer/util"

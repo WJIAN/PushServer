@@ -4,7 +4,7 @@ import (
 	"time"
 
 
-	"github.com/shawnfeng/slog"
+	"github.com/shawnfeng/sutil/slog"
 )
 
 type ConnStateType int32

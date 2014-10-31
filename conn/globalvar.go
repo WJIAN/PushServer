@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"encoding/json"
 
-	"github.com/shawnfeng/slog"
+	"github.com/shawnfeng/sutil/slog"
 
 	"PushServer/util"
 )

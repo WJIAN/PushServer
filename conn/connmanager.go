@@ -13,7 +13,8 @@ import (
 
 	"github.com/sdming/gosnow"
 	"code.google.com/p/goprotobuf/proto"
-	"github.com/shawnfeng/slog"
+
+	"github.com/shawnfeng/sutil/slog"
 
 
 

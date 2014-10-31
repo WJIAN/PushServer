@@ -12,7 +12,7 @@ import (
 import (
 	//"code.google.com/p/go-uuid/uuid"
 	"code.google.com/p/goprotobuf/proto"
-	"github.com/shawnfeng/slog"
+	"github.com/shawnfeng/sutil/slog"
 )
 
 // my lib
