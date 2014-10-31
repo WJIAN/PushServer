@@ -287,7 +287,7 @@ func (self *Client) proto(data []byte) {
 	pb := &pushproto.Talk{}
 	err := proto.Unmarshal(data, pb)
 	if err != nil {
-		slog.Warnf("%s client:%s unmarshaling error: %s", fun, self, err)
+		slog.Warnf("%s client:%s unmarshaling error: %s data:%v", fun, self, err, data)
 		self.errNotifyCLOSED("package unmarshaling error")
 		return
 	}
