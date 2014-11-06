@@ -294,9 +294,9 @@ func (self *Client) Recv() {
 
 
 	// 是否是read返回错误socket已经关闭，返回时候没有处理的数据，错误信息
-	isclose, data, err := snetutil.PackageSplit(self.conn, gServConfig.HeartIntv * gServConfig.ReadTimeoutScale, self.proto)
+	isclose, data, err := snetutil.PackageSplit(self.conn, time.Second * time.Duration(gServConfig.HeartIntv * gServConfig.ReadTimeoutScale), self.proto)
 	if err != nil {
-		slog.Warnf("%s client:%s packageSplit isclose:%t error:%s data:%v", fun, self, isclose, err, data)
+		slog.Warnf("%s client:%s packageSplit isclose:%t error:%s data:%v sd:%s", fun, self, isclose, err, data, data)
 		if !isclose {
 			errmsg = err.Error()
 		}
