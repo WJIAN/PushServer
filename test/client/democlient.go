@@ -418,7 +418,7 @@ func (m *userClient) Power() {
 		m.changeState(State_SYN_SEND)
 
 		// hold here
-		isclose, data, err := snetutil.PackageSplit(conn, 8*60, m.protoAns)
+		isclose, data, err := snetutil.PackageSplit(conn, time.Second*8*60, m.protoAns)
 		if err != nil {
 			slog.Errorf("%s conn read err:%s isclose:%t data:%v", fun, err, isclose, data)
 		}

@@ -1,7 +1,6 @@
 package connection
 
 import (
-	"log"
 	"fmt"
 	"encoding/json"
 
@@ -180,7 +179,7 @@ func (self *GenServConfig) setLinker() {
 
 func Power(cfg []byte) {
 	json.Unmarshal(cfg, gServConfig)
-	log.Println(gServConfig)
+	slog.Infoln(gServConfig)
 
 	// log out init
 	logDir := gServConfig.LogDir

@@ -1,11 +1,8 @@
 package main
 
 import (
-	"log"
-
-
 	"os"
-//	"io/ioutil"
+	"github.com/shawnfeng/sutil/slog"
 )
 
 import (
@@ -17,14 +14,14 @@ import (
 func main() {
 	// getconfig
 	if len(os.Args) < 2 {
-		log.Panicln("Where config file?")
+		slog.Panicln("Where config file?")
 	}
 	cfgFile := os.Args[1]
 	data, err := util.GetFile(cfgFile)
 	if err != nil {
-		log.Panicln(cfgFile, err)
+		slog.Panicln(cfgFile, err)
 	}
-	log.Printf("cfgfile:%s cfg:%s", cfgFile, data)
+	slog.Infof("cfgfile:%s cfg:%s", cfgFile, data)
 
 
 
